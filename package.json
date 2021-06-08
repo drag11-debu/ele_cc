@@ -1,0 +1,18 @@
+{
+	"name":        "ele_cc",
+	"version":     "0.0.1",
+	"private" :    true,
+	"description": "Electronical Cookie Creator",
+	"main":        "app/index.js",
+	"author":      "drag11",
+	"license":     "MIT",
+	"scripts": {
+		"test":  "electron .",
+		"win":   "npx electron-builder build --win",
+		"linux": "npx electron-builder build --linux"
+	},
+	"devDependencies": {
+		"electron-builder": "^22.10.5",
+		"electron":         "^12.0.7"
+	}
+}
