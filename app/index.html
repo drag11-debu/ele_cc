@@ -137,7 +137,7 @@ body {
 	<div id="webWrap"></div>
 	<script type="text/javascript">
 document.querySelectorAll('.send_onoff').forEach(function(target) {
-	target.addEventListener('change', function() { window.EleIpcRendererSend(this.dataset.event + '_' + (this.checked ? 'ON' : 'OFF'), ''); });
+	target.addEventListener('change', function() { window.EleIpcRendererSend(this.dataset.event, this.checked); });
 });
 document.querySelectorAll('.send_savedata').forEach(function(target) {
 	target.addEventListener('click',  function() { if(document.getElementById('quick_data').value.length > 0) window.EleIpcRendererSend(this.dataset.event, document.getElementById('quick_data').value); });
@@ -161,7 +161,7 @@ document.getElementById('auto_juicer').addEventListener('change', function() {
 	document.getElementById('click_juicer').disabled        = this.checked;
 	document.getElementById('click_juicer_target').disabled = this.checked;
 	document.getElementById('reroll_garden').disabled       = this.checked;
-	window.EleIpcRendererSend(this.dataset.event + '_' + (this.checked ? 'ON' : 'OFF'), '');
+	window.EleIpcRendererSend(this.dataset.event, this.checked);
 });
 document.getElementById('click_juicer_target').addEventListener('change', function() { window.EleIpcRendererSend(this.dataset.event, this.value); });
 document.getElementById('quick_export'       ).addEventListener('click',  function() { window.EleIpcRendererSend(this.dataset.event, ''); });

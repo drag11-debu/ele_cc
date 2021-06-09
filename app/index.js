@@ -117,38 +117,28 @@ app.on('ready', () => {
 	win.on('enter-full-screen', eventResize);
 	win.on('leave-full-screen', eventResize);
 
-	ipcMain.on('CLICK_COOKIE_ON',  (_) => {
-		view.webContents.executeJavaScript("oEleCC.TimerStart('BigCookie');");
+	ipcMain.on('CLICK_COOKIE',  (event, onoff) => {
+		view.webContents.executeJavaScript(onoff ? "oEleCC.TimerStart('BigCookie');" : "oEleCC.TimerStop('BigCookie');");
 	});
-	ipcMain.on('CLICK_COOKIE_OFF', (_) => {
-		view.webContents.executeJavaScript("oEleCC.TimerStop('BigCookie');");
+	ipcMain.on('CLICK_GOLDEN',      (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Golden']       = " + onoff + ";"); });
+	ipcMain.on('CLICK_SWITCH',      (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['GSwitch']      = " + onoff + ";"); });
+	ipcMain.on('SELL_GODZAMOK',     (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['SellGodzamok'] = " + onoff + ";"); });
+	ipcMain.on('CLICK_CAST',        (event, onoff) => {
+		view.webContents.executeJavaScript(onoff ? "oEleCC.AutoCastStart();" : "oEleCC.AutoCastStop();");
 	});
-	ipcMain.on('CLICK_GOLDEN_ON',      (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Golden']       = true; "); });
-	ipcMain.on('CLICK_GOLDEN_OFF',     (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Golden']       = false;"); });
-	ipcMain.on('CLICK_SWITCH_ON',      (_) => { view.webContents.executeJavaScript("oEleCC.Flags['GSwitch']      = true; "); });
-	ipcMain.on('CLICK_SWITCH_OFF',     (_) => { view.webContents.executeJavaScript("oEleCC.Flags['GSwitch']      = false;"); });
-	ipcMain.on('SELL_GODZAMOK_ON',     (_) => { view.webContents.executeJavaScript("oEleCC.Flags['SellGodzamok'] = true;");  });
-	ipcMain.on('SELL_GODZAMOK_OFF',    (_) => { view.webContents.executeJavaScript("oEleCC.Flags['SellGodzamok'] = false;"); });
-	ipcMain.on('CLICK_CAST_ON',        (_) => { view.webContents.executeJavaScript("oEleCC.AutoCastStart();"); });
-	ipcMain.on('CLICK_CAST_OFF',       (_) => { view.webContents.executeJavaScript("oEleCC.AutoCastStop();");  });
-	ipcMain.on('BUY_EP_ON',            (_) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = true;");  });
-	ipcMain.on('BUY_EP_OFF',           (_) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = false;"); });
-	ipcMain.on('BUY_Z_ON',             (_) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = true;");  });
-	ipcMain.on('BUY_Z_OFF',            (_) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = false;"); });
-	ipcMain.on('CLICK_FORTUNE_ON',     (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Fortune']      = true;");  });
-	ipcMain.on('CLICK_FORTUNE_OFF',    (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Fortune']      = false;"); });
-	ipcMain.on('CLICK_DRAGON_ON',      (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Dragon']       = true;");  });
-	ipcMain.on('CLICK_DRAGON_OFF',     (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Dragon']       = false;"); });
-	ipcMain.on('CLICK_WRINKLER_ON',    (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Wrinkler']     = true;");  });
-	ipcMain.on('CLICK_WRINKLER_OFF',   (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Wrinkler']     = false;"); });
-	ipcMain.on('CLICK_SUGAR_ON',       (_) => { view.webContents.executeJavaScript("oEleCC.Flags['ReRollSugar']  = true;");  });
-	ipcMain.on('CLICK_SUGAR_OFF',      (_) => { view.webContents.executeJavaScript("oEleCC.Flags['ReRollSugar']  = false;"); });
-	ipcMain.on('AUTO_JUICER_ON',       (_) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoJuicer']   = true;");  });
-	ipcMain.on('AUTO_JUICER_OFF',      (_) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoJuicer']   = false;");  });
-	ipcMain.on('CLICK_GARDENER_ON',    (_) => { view.webContents.executeJavaScript("oEleCC.Flags['Gardener']     = true;");  });
-	ipcMain.on('CLICK_GARDENER_OFF',   (_) => { view.webContents.executeJavaScript("oEleCC.ClickGardenerStop();"); });
-	ipcMain.on('GARDEN_JUICER_ON',     (_) => { view.webContents.executeJavaScript("oEleCC.GardenJuicerStart();"); });
-	ipcMain.on('GARDEN_JUICER_OFF',    (_) => { view.webContents.executeJavaScript("oEleCC.GardenJuicerStop();");  });
+	ipcMain.on('BUY_EP',            (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = " + onoff + ";"); });
+	ipcMain.on('BUY_Z',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = " + onoff + ";"); });
+	ipcMain.on('CLICK_FORTUNE',     (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Fortune']      = " + onoff + ";"); });
+	ipcMain.on('CLICK_DRAGON',      (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Dragon']       = " + onoff + ";"); });
+	ipcMain.on('CLICK_WRINKLER',    (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Wrinkler']     = " + onoff + ";"); });
+	ipcMain.on('CLICK_SUGAR',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['ReRollSugar']  = " + onoff + ";"); });
+	ipcMain.on('AUTO_JUICER',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoJuicer']   = " + onoff + ";"); });
+	ipcMain.on('CLICK_GARDENER',    (event, onoff) => {
+		view.webContents.executeJavaScript(onoff ? "oEleCC.Flags['Gardener'] = true;" : "oEleCC.ClickGardenerStop();");
+	});
+	ipcMain.on('GARDEN_JUICER',     (event, onoff) => {
+		view.webContents.executeJavaScript(onoff ? "oEleCC.GardenJuicerStart();" : "oEleCC.GardenJuicerStop();");
+	});
 	ipcMain.on('GARDEN_JUICER_TARGET', (event, target) => {
 		view.webContents.executeJavaScript("oEleCC.GardenJuicerTargetChange('" + target + "');");
 	});
@@ -182,18 +172,19 @@ app.on('ready', () => {
 		else
 			view.webContents.openDevTools();
 	});
-	ipcMain.on('AUTO_BACKUP_ON', (_) => {
-		if(idAutoBackupTimer == 0) {
-			AutoBackup();
-			idAutoBackupTimer = setInterval(AutoBackup, 1000 * 60 * 60);
-			view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup started.', false);");
-		}
-	});
-	ipcMain.on('AUTO_BACKUP_OFF', (_) => {
-		if (idAutoBackupTimer > 0) {
-			clearInterval(idAutoBackupTimer);
-			idAutoBackupTimer = 0; 
-			view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup stopped.', false);");
+	ipcMain.on('AUTO_BACKUP', (event, onoff) => {
+		if (onoff) {
+			if(idAutoBackupTimer == 0) {
+				AutoBackup();
+				idAutoBackupTimer = setInterval(AutoBackup, 1000 * 60 * 60);
+				view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup started.', false);");
+			}
+		} else {
+			if (idAutoBackupTimer > 0) {
+				clearInterval(idAutoBackupTimer);
+				idAutoBackupTimer = 0; 
+				view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup stopped.', false);");
+			}
 		}
 	});
 	ipcMain.on('TEST', (_) => {

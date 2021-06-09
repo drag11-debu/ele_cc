@@ -32,8 +32,6 @@ class cEleCC {
 		'GardenJuicer': false,
 		'AutoJuicer':   false
 	};
-	// Game objects
-	oLocalMath =             {};
 	// 1Sec Timer couunt
 	nSecCount =              0;
 	// Garden Setting
@@ -42,25 +40,37 @@ class cEleCC {
 	sGardenReRollExp =       '';
 	aGardenEffect =          ['goldenClover', 'keenmoss', 'nursetulip', 'tidygrass', 'everdaisy', 'elderwort', 'whiskerbloom'];
 	aGardenDrop =            ['bakerWheat', 'bakeberry', 'ichorpuff', 'greenRot', 'duketater', 'drowsyfern', 'queenbeetLump'];
-	// for Sell Godzamok
+	// For Sell Godzamok
 	nSellGodzamokCnt =       0;
 	oSellGodzamokAmount =    {};
 	nSellGodzamokBeforeAmt = 0;
 	// Excluded: Has Minigame, Has Synergy effect to Fractal/Javascript/Idleverse
 	aSellGodzamokTarget =    ['Mine', 'Factory', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser'];
 	nSellGodzamokFreq =      5;
-	// for Click Dragon
+	// For Click Dragon
 	aClickDragonHasCheck =   ['Dragon scale', 'Dragon claw', 'Dragon fang', 'Dragon teddy bear'];
-	// for Click Fortune
+	// For Click Fortune
 	aClickFortuneHasCheck =  [
 		'Fortune #001','Fortune #002','Fortune #003','Fortune #004','Fortune #005','Fortune #006','Fortune #007','Fortune #008','Fortune #009','Fortune #010',
 		'Fortune #011','Fortune #012','Fortune #013','Fortune #014','Fortune #015','Fortune #016','Fortune #017',
 		'Fortune #100','Fortune #101','Fortune #102','Fortune #103','Fortune #104'
 	];
-	// for Auto Cast(2)
+	// For Auto Cast
+	// Required Wizard tower amount
+	// Wizard tower Lvl.1
+	//   21(MP  23, Fate  23):Fate * 1
+	//   55(MP  38, Fate  32):Fate * 1 minimum charge time
+	//  321(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
+	//  326(MP  83, Fate  59):Fate + Stretch
+	// Wizard tower Lvl.10
+	//    1(MP  34, Fate  30):Fate * 1
+	//  500(MP 101, Fate  70):Fate * 2(Fate -> SellAll -> Buy1 -> Fate)
+	// 1400(MP 150, Fate 100):Fate * 3(Random(Fate) -> Random(Fate) -> SellAll -> Buy1 -> Fate)
+	oLocalMath =             {};
+	// For Auto Cast(2)
 	// Excluded: Wizard tower (Manabloom)
 	aAutoCastTarget =        ['High-five', 'Congregation', 'Luxuriant harvest', 'Ore vein', 'Oiled-up', 'Juicy profits', 'Fervent adoration', 'Delicious lifeforms', 'Breakthrough', 'Righteous cataclysm', 'Golden ages', 'Extra cycles', 'Solar flare', 'Winning streak', 'Macrocosm', 'Refactoring', 'Cosmic nursery'];
-	// for Auto-Buy PlanZ
+	// For Auto-Buy PlanZ
 	// Excluded: Wizard tower (keep amounts for magic meter)
 	nBuyZWishRate =          1.5;
 	nBuyZUpgradeRate =       1.2;
@@ -72,13 +82,14 @@ class cEleCC {
 	nBuyZTarget3Rate =       3;
 	// For Garden Juicer
 	nGardenJuicerFreqMain   = 1000 * 5;
-	nGardenJuicerFreqReRoll =  300;
-	nGardenNextStep         =    0;
+	nGardenJuicerFreqReRoll = 300;
+	nGardenNextStep         = 0;
 	oGardenJuicerSet        = {};
 	sGardenJuicerExp        = '';
 	nGardenJuicerReRollCnt  = 0;
 	aGardenJuicerTarget     = ['queenbeetLump', 'everdaisy', 'drowsyfern', 'duketater'];
-	nGardenJuicerQBrange    = 7;
+	nGardenJuicerQBrangeDef = 6;
+	nGardenJuicerQBrange    = 6;
 	// For Auto Garden Juicer
 	bAutoJuicerReRoll       = false;
 	// For Sugar auto harvest
@@ -224,7 +235,7 @@ class cEleCC {
 					}
 					// Auto Cast spell(1)
 					if (self.Flags['AutoCast1'] && (!Game.hasBuff('Clot'))) {
-						if (self.CastSpell('hand of fate', false)) {
+						if (self.CastSpell('hand of fate')) {
 							self.Flags['AutoCast1'] = false;
 							self.Notify('Bibbidi-bobbidi...poo...', false);
 						}
@@ -252,9 +263,9 @@ class cEleCC {
 	}
 	//--------------------------------------------------------------------------------------------------------------
 	// Cast Spell
-	CastSpell(name, maxchk) {
+	CastSpell(name) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
-		if (oGrimoire && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells[name])) && ((!maxchk) || (oGrimoire.magic == oGrimoire.magicM))) {
+		if (oGrimoire && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells[name]))) {
 			oGrimoire.castSpell(oGrimoire.spells[name]);
 			return true;
 		} else
@@ -263,7 +274,8 @@ class cEleCC {
 	//--------------------------------------------------------------------------------------------------------------
 	// Sell Godzamok
 	SellGodzamok() {
-		if ((!Game.hasBuff('Clot')) && (self.Timers['SellGodzamok'] == 0)) {
+		let oPantheon = Game.Objects['Temple'].minigame;
+		if (oPantheon && Game.hasGod('ruin') && (!Game.hasBuff('Clot')) && (self.Timers['SellGodzamok'] == 0)) {
 			self.nSellGodzamokBeforeAmt = Game.cookies;
 			self.nSellGodzamokCnt       = 0;
 			self.oSellGodzamokAmount    = {};
@@ -695,7 +707,7 @@ class cEleCC {
 						self.GardenJuicerAuto();
 					}
 					if (self.Flags['GardenJuicer']) {
-						self.nGardenJuicerQBrange = 7;
+						self.nGardenJuicerQBrange = self.nGardenJuicerQBrangeDef;
 						self.sGardenJuicerExp     = Game.WriteSave(1);
 						for (let loop1 = 0; loop1 < 6; loop1++) {
 							for (let loop2 = 0; loop2 < 6; loop2++) {
@@ -708,7 +720,7 @@ class cEleCC {
 								}
 							}
 						}
-						if ((nTotal > 0) && (self.aGardenJuicerTarget.includes('queenbeet'))) self.nGardenJuicerQBrange = Math.max(7, (nMax - nMin - 1));
+						if ((nTotal > 0) && (self.aGardenJuicerTarget.includes('queenbeet'))) self.nGardenJuicerQBrange = Math.max(self.nGardenJuicerQBrangeDef, nMax - nMin);
 						self.Notify('Garden Juicer Check time.<br>' + 
 							'Target: ' + self.aGardenJuicerTarget + ':' + nTotal + '<br>' + 
 							(self.aGardenJuicerTarget.includes('queenbeet') ? 'range: ' + self.nGardenJuicerQBrange : ''), false);
@@ -732,11 +744,15 @@ class cEleCC {
 							}
 						}
 					}
-					if (self.aGardenJuicerTarget.includes('queenbeet')) {
-						bResult = ((nTotal == 0) || (nMax - nMin < self.nGardenJuicerQBrange));
+					if (self.nGardenJuicerReRollCnt > 400) {
+						bResult = true;
+						self.Notify('Hmmm...', false);
+					} else if (nTotal == 0) {
+						bResult = true;
+					} else if (self.aGardenJuicerTarget.includes('queenbeet')) {
+						bResult = (nMax - nMin < self.nGardenJuicerQBrange);
 					} else {
-						bResult = ((nTotal == 0) || (nCnt >= (self.nGardenJuicerReRollCnt > 400 ? 1 : Math.ceil(nTotal / 2))));
-						if (bResult && (self.nGardenJuicerReRollCnt > 400)) self.Notify('Hmmm...', false);
+						bResult = (nCnt >= Math.ceil(nTotal / 2));
 					}
 				}
 				if (bResult) {
@@ -831,7 +847,7 @@ class cEleCC {
 	ClickSpellCheckTimer() {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
-			if ((!self.Flags['AutoCast1']) && (!self.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']))) {
+			if ((!self.Flags['AutoCast1']) && (!self.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate'])) && (oGrimoire.magic == oGrimoire.magicM)) {
 				self.oLocalMath.seedrandom(Game.seed + '/' + oGrimoire.spellsCastTotal);
 				let spellResult = self.GrimoireIsFall(self.GrimoireHand) ? self.GrimoireHand.win(self.GrimoireIsEV()) : self.GrimoireHand.fail(self.GrimoireIsEV());
 				if (spellResult == 'building special') {
@@ -841,7 +857,7 @@ class cEleCC {
 					self.Flags['AutoCast2'] = true;
 					self.Notify('Maybe I can cast <b>' + spellResult + '</b>', false);
 				} else {
-					self.CastSpell('hand of fate', false);
+					self.CastSpell('hand of fate');
 					self.Notify('Hahaha...', false);
 				}
 			}
@@ -850,7 +866,7 @@ class cEleCC {
 				if (self.AnyHasBuff(self.aAutoCastTarget) && 
 				    (!self.AnyHasBuff(['Clot', 'Dragonflight', 'Click frenzy', 'Elder frenzy'])) &&
 				    (self.Timers['ReRollGarden'] == 0) && (self.nGardenJuicerReRollCnt == 0)) {
-					if (self.CastSpell('hand of fate', false)) {
+					if (self.CastSpell('hand of fate')) {
 						self.Flags['AutoCast2'] = false;
 						self.Notify('Bibbidi-bobbidi...baa...', false);
 					}
