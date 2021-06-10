@@ -1,5 +1,5 @@
-const { ipcRenderer } = require('electron');
-window.EleIpcRendererSend = (msg, arg) => {
-	ipcRenderer.send(msg, arg);
-};
-ipcRenderer.on('SAVEDATA_SET',  (event, savedata) => { document.getElementById('quick_data').value = savedata; });
+const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('elect', {
+	IpcRendererSend: async (msg, arg) => await ipcRenderer.invoke(msg, arg),
+	on:              (channel, callback) => ipcRenderer.on(channel, (event, argv) => callback(event, argv))
+});

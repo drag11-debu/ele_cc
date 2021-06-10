@@ -131,19 +131,20 @@ body {
 			<button type="button"   id="test"          class="send_only"     data-event="TEST"        />Test</button>
 		</div>
 		<div id="webHeaderB">
-			<input  type="checkbox" id="win_shrink"    class="check_box" /><label class="check_box_label webHeaderB" for="win_shrink"><span></span></label>
+			<input  type="checkbox" id="win_shrink"    class="check_box send_onoff" data-event="WIN_SHRINK" /><label class="check_box_label webHeaderB" for="win_shrink"><span></span></label>
 		</div>
 	</div>
 	<div id="webWrap"></div>
 	<script type="text/javascript">
+// Send on
 document.querySelectorAll('.send_onoff').forEach(function(target) {
-	target.addEventListener('change', function() { window.EleIpcRendererSend(this.dataset.event, this.checked); });
+	target.addEventListener('change', function() { window.elect.IpcRendererSend(this.dataset.event, this.checked); });
 });
 document.querySelectorAll('.send_savedata').forEach(function(target) {
-	target.addEventListener('click',  function() { if(document.getElementById('quick_data').value.length > 0) window.EleIpcRendererSend(this.dataset.event, document.getElementById('quick_data').value); });
+	target.addEventListener('click',  function() { if(document.getElementById('quick_data').value.length > 0) window.elect.IpcRendererSend(this.dataset.event, document.getElementById('quick_data').value); });
 });
 document.querySelectorAll('.send_only').forEach(function(target) {
-	target.addEventListener('click',  function() { window.EleIpcRendererSend(this.dataset.event, ''); });
+	target.addEventListener('click',  function() { window.elect.IpcRendererSend(this.dataset.event, ''); });
 });
 document.getElementById('auto_juicer').addEventListener('change', function() {
 	let e = new Event('change');
@@ -161,12 +162,15 @@ document.getElementById('auto_juicer').addEventListener('change', function() {
 	document.getElementById('click_juicer').disabled        = this.checked;
 	document.getElementById('click_juicer_target').disabled = this.checked;
 	document.getElementById('reroll_garden').disabled       = this.checked;
-	window.EleIpcRendererSend(this.dataset.event, this.checked);
+	window.elect.IpcRendererSend(this.dataset.event, this.checked);
 });
-document.getElementById('click_juicer_target').addEventListener('change', function() { window.EleIpcRendererSend(this.dataset.event, this.value); });
-document.getElementById('quick_export'       ).addEventListener('click',  function() { window.EleIpcRendererSend(this.dataset.event, ''); });
+document.getElementById('click_juicer_target').addEventListener('change', function() { window.elect.IpcRendererSend(this.dataset.event, this.value); });
+document.getElementById('quick_export'       ).addEventListener('click',  function() { window.elect.IpcRendererSend(this.dataset.event, ''); });
 document.getElementById('quick_clear'        ).addEventListener('click',  function() { document.getElementById('quick_data').value = ''; });
-document.getElementById('win_shrink'         ).addEventListener('change', function() { window.EleIpcRendererSend('WIN_' + (this.checked ? 'SHRINK' : 'EXTEND'), ''); });
+// Receive on
+window.elect.on('SAVEDATA_SET', function(event, savedata) {
+	document.getElementById('quick_data').value = savedata;
+});
 	</script>
 </body>
 </html>
