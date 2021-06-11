@@ -4,24 +4,35 @@ const path = require('path');
 const fs   = require('fs');
 let win;
 let view;
-let lngHeightBackup = 0;
-let idAutoBackupTimer = 0;
-let sProcessDir = '';
+let nHeightBak   = 0;
+let idMinTimer   = 0;
+let nMinTimerCnt = 0;
+let sProcessDir  = '';
 
-function AutoBackup() {
-	view.webContents.executeJavaScript("savedata: {Game.WriteSave(1)}", false).then(function(savedata) {
-		let dt = new Date();
-		let sFilename =
-		dt.getFullYear() +
-			(dt.getMonth() + 1).toString().padStart(2, '0') +
-			(dt.getDate()).toString().padStart(2, '0') +
-			(dt.getHours()).toString().padStart(2, '0') +
-			(dt.getMinutes()).toString().padStart(2, '0') +
-			(dt.getSeconds()).toString().padStart(2, '0');
-		fs.writeFile(path.join(sProcessDir, 'AutoBackup_' + sFilename + '.txt'), savedata, (error) => {
-			if (error != null) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup error.', false);");
-		})
+function MinTimer() {
+	// AutoLog
+	view.webContents.executeJavaScript("logStr: { oEleCC.GetLog() }", false).then(function(logStr) {
+		fs.appendFile(path.join(sProcessDir, 'log.txt'), logStr + '\r\n', (error, result) => {
+			if (error) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Log error.', false);");
+		});
 	});
+	// AutoBackup
+	if (nMinTimerCnt == 0) {
+		view.webContents.executeJavaScript("savedata: { Game.WriteSave(1) }", false).then(function(savedata) {
+			let dt = new Date();
+			let sTime =
+				 dt.getFullYear()                               +
+				(dt.getMonth() + 1).toString().padStart(2, '0') +
+				(dt.getDate()     ).toString().padStart(2, '0') +
+				(dt.getHours()    ).toString().padStart(2, '0') +
+				(dt.getMinutes()  ).toString().padStart(2, '0') +
+				(dt.getSeconds()  ).toString().padStart(2, '0');
+			fs.writeFile(path.join(sProcessDir, 'AutoBackup_' + sTime + '.txt'), savedata, (error, result) => {
+				if (error) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup error.', false);");
+			});
+		});
+	}
+	nMinTimerCnt = (nMinTimerCnt + 1) % 60;
 }
 
 app.on('window-all-closed', () => {
@@ -153,12 +164,12 @@ app.on('ready', () => {
 	ipcMain.handle('WIN_SHRINK', (event, onoff) => {
 		if (onoff) {
 			let aSize = win.getSize();
-			lngHeightBackup = aSize[1];
+			nHeightBak = aSize[1];
 			win.setSize(aSize[0], process.platform == 'linux' ? 120 : 160, false);
-		} else if (lngHeightBackup > 0) {
+		} else if (nHeightBak > 0) {
 			let aSize = win.getSize();
-			win.setSize(aSize[0], lngHeightBackup, false);
-			lngHeightBackup = 0;
+			win.setSize(aSize[0], nHeightBak, false);
+			nHeightBak = 0;
 		}
 	});
 	ipcMain.handle('WIN_DEVTOOL', (_) => {
@@ -169,15 +180,15 @@ app.on('ready', () => {
 	});
 	ipcMain.handle('AUTO_BACKUP', (event, onoff) => {
 		if (onoff) {
-			if(idAutoBackupTimer == 0) {
-				AutoBackup();
-				idAutoBackupTimer = setInterval(AutoBackup, 1000 * 60 * 60);
+			if(idMinTimer == 0) {
+				MinTimer();
+				idMinTimer = setInterval(MinTimer, 1000 * 60);
 				view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup started.', false);");
 			}
 		} else {
-			if (idAutoBackupTimer > 0) {
-				clearInterval(idAutoBackupTimer);
-				idAutoBackupTimer = 0; 
+			if (idMinTimer > 0) {
+				clearInterval(idMinTimer);
+				idMinTimer = 0; 
 				view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup stopped.', false);");
 			}
 		}

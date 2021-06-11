@@ -35,7 +35,7 @@ let oEleCC = {
 	// 1Sec Timer couunt
 	nSecCount:               0,
 	// Garden Setting
-	oGardenSetting:          {},
+	oGardenerSetting:        {},
 	oGardenReRollSet:        {},
 	sGardenReRollExp:        '',
 	aGardenEffect:           ['goldenClover', 'keenmoss', 'nursetulip', 'tidygrass', 'everdaisy', 'elderwort', 'whiskerbloom'],
@@ -93,6 +93,8 @@ let oEleCC = {
 	nRigidelSell:            0,
 	nPrevGod:                -1,
 	sRigidelSell:            'Mine',
+	// log
+	aLog:                    [],
 	//--------------------------------------------------------------------------------------------------------------
 	// Functions
 	// Initialize
@@ -152,6 +154,20 @@ let oEleCC = {
 	// Log,popup,notify
 	Notify: function(message, persist) {
 		Game.Notify('Ele-CC ' + (persist ? 'report' : 'info'), message, 0, (persist ? 0 : 7));
+		let dt    = new Date();
+		let sTime =
+			 dt.getFullYear()                               + '/' +
+			(dt.getMonth() + 1).toString().padStart(2, '0') + '/' +
+			(dt.getDate()     ).toString().padStart(2, '0') + ' ' +
+			(dt.getHours()    ).toString().padStart(2, '0') + ':' +
+			(dt.getMinutes()  ).toString().padStart(2, '0') + ':' +
+			(dt.getSeconds()  ).toString().padStart(2, '0');
+		this.aLog.push('[' + sTime + ']' + message);
+	},
+	GetLog: function() {
+		let sResult = this.aLog.join('\r\n');
+		this.aLog.splice(0);
+		return sResult;
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// 1Sec Timer
@@ -167,8 +183,8 @@ let oEleCC = {
 		if  (this.nSecCount % 120 == 0) {
 			if (this.Flags['Gardener']) {
 				this.ClickGardener();
-			} else if (Object.keys(this.oGardenSetting).length) {
-				this.oGardenSetting = {};
+			} else if (Object.keys(this.oGardenerSetting).length) {
+				this.oGardenerSetting = {};
 			}
 		}
 		if ((this.nSecCount % 120 == 0) && (this.Flags['ReRollSugar']) && Game.canLumps() && (this.Timers['SellGodzamok'] == 0) && (this.Timers['AutoBuyZ'] == 0) && (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0) && (this.Timers['ReRollSugar'] == 0)) {
@@ -418,38 +434,38 @@ let oEleCC = {
 	// Garden maintenance
 	GardenPlant: function(x, y) {
 		let oGarden = Game.Objects['Farm'].minigame;
-		if ((oGarden) && (x + '_' + y in this.oGardenSetting)) {
-			if (this.oGardenSetting[x + '_' + y] == 'queenbeetLump') {
-				delete this.oGardenSetting[x + '_' + y];
+		if ((oGarden) && (x + '_' + y in this.oGardenerSetting)) {
+			if (this.oGardenerSetting[x + '_' + y] == 'queenbeetLump') {
+				delete this.oGardenerSetting[x + '_' + y];
 			} else {
-				oGarden.useTool(oGarden.plants[this.oGardenSetting[x + '_' + y]].id, x, y);
+				oGarden.useTool(oGarden.plants[this.oGardenerSetting[x + '_' + y]].id, x, y);
 			}
 		}
 	},
 	ClickGardener: function() {
 		let oGarden = Game.Objects['Farm'].minigame;
 		if (oGarden) {
-			if (!Object.keys(this.oGardenSetting).length) {
+			if (!Object.keys(this.oGardenerSetting).length) {
 				for (let loop1 = 0; loop1 < 6; loop1++) {
 					for (let loop2 = 0; loop2 < 6; loop2++) {
 						let tile = oGarden.getTile(loop1, loop2);
-						if (tile[0] > 0) this.oGardenSetting[loop1 + '_' + loop2] = oGarden.plantsById[tile[0] - 1].key;
+						if (tile[0] > 0) this.oGardenerSetting[loop1 + '_' + loop2] = oGarden.plantsById[tile[0] - 1].key;
 					}
 				}
 			}
 			for (let loop1 = 0; loop1 < 6; loop1++) {
 				for (let loop2 = 0; loop2 < 6; loop2++) {
 					let aTile = oGarden.getTile(loop1, loop2);
-					let sKey  = this.oGardenSetting[loop1 + '_' + loop2];
+					let sKey  = this.oGardenerSetting[loop1 + '_' + loop2];
 					if (this.aGardenEffect.includes(sKey) || this.aGardenDrop.includes(sKey)) {
 						if (aTile[0] > 0) {
 							let oType = oGarden.plantsById[aTile[0] - 1];
-							if ((aTile[0] - 1) != oGarden.plants[this.oGardenSetting[loop1 + '_' + loop2]].id) {
+							if ((aTile[0] - 1) != oGarden.plants[this.oGardenerSetting[loop1 + '_' + loop2]].id) {
 								if (oType.unlocked) {
 									oGarden.harvest(loop1, loop2);
 									this.GardenPlant(loop1, loop2);
 								} else {
-									this.oGardenSetting[loop1 + '_' + loop2] = oType.key;
+									this.oGardenerSetting[loop1 + '_' + loop2] = oType.key;
 								}
 							} else if ((this.aGardenEffect.includes(sKey) && !oType.immortal && (((aTile[1] + Math.ceil(oType.ageTick + oType.ageTickR)) >= 100))) ||
 								   (this.aGardenDrop.includes(sKey) && (aTile[1] >= oType.mature))) {
@@ -465,12 +481,12 @@ let oEleCC = {
 							oGarden.harvest(loop1, loop2);
 						} else if ((aTile[1] >= oType.mature) && (!oType.unlocked)) {
 							oGarden.harvest(loop1, loop2);
-							delete this.oGardenSetting[loop1 + '_' + loop2];
-						} else if ((!this.oGardenSetting[loop1 + '_' + loop2]) && (!oType.unlocked)) {
-							this.oGardenSetting[loop1 + '_' + loop2] = oType.key;
+							delete this.oGardenerSetting[loop1 + '_' + loop2];
+						} else if ((!this.oGardenerSetting[loop1 + '_' + loop2]) && (!oType.unlocked)) {
+							this.oGardenerSetting[loop1 + '_' + loop2] = oType.key;
 						} else if ((aTile[1] + Math.ceil(oType.ageTick + oType.ageTickR)) >= 100) {
 							oGarden.harvest(loop1, loop2);
-							delete this.oGardenSetting[loop1 + '_' + loop2];
+							delete this.oGardenerSetting[loop1 + '_' + loop2];
 						}
 					}
 				}
@@ -478,7 +494,7 @@ let oEleCC = {
 		}
 	},
 	ClickGardenerStop: function() {
-		this.oGardenSetting    = {};
+		this.oGardenerSetting    = {};
 		this.Flags['Gardener'] = false;
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -546,11 +562,11 @@ let oEleCC = {
 			// ReRoll
 			Game.ImportSaveCode(savedata);
 			// Clear Garrdener setting 
-			this.oGardenSetting = {};
+			this.oGardenerSetting = {};
 			// Garden check
 			this.ClickGardener();
 			// Clear Garrdener setting 
-			this.oGardenSetting = {};
+			this.oGardenerSetting = {};
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -559,11 +575,11 @@ let oEleCC = {
 		let oGarden = Game.Objects['Farm'].minigame;
 		if (oGarden && (!this.Flags['GardenJuicer']) && (this.Timers['GardenJuicer'] == 0)) {
 			this.Flags['GardenJuicer']  = true;
-			this.oGardenJuicerSet        = {};
-			this.sGardenJuicerExp        = '';
+			this.oGardenJuicerSet       = {};
+			this.sGardenJuicerExp       = '';
 			this.nGardenNextStep        = oGarden.nextStep;
 			this.nGardenJuicerReRollCnt = 0;
-			this.Timers['GardenJuicer']  = setTimeout(this.GardenJuicerTimer.bind(this), this.nGardenJuicerFreqMain);
+			this.Timers['GardenJuicer'] = setTimeout(this.GardenJuicerTimer.bind(this), this.nGardenJuicerFreqMain);
 			this.Notify('Garden Juicer started.', false);
 		} else {
 			this.Notify(this.Timers['GardenJuicer'] != 0 ? 'Garden Juicer was already started.' : '???', false);
@@ -641,6 +657,11 @@ let oEleCC = {
 						nJuicyCnt++;
 					} else if ((loop1 < 4) && (loop2 < 4) && (tileCheck1(loop1, loop2, idQB)) && (aTileId[loop1 + 1][loop2 + 1] != idJuicy)) {
 						nStatus1 = Math.min(nStatus1, (tileCheck2(loop1, loop2, matureQB) ? 1 : 0));
+						if (aTileId[loop1 + 1][loop2 + 1] > 0) {
+							oGarden.harvest(loop1 + 1, loop2 + 1);
+							let sKey = (loop1 + 1) + '_' + (loop2 + 1);
+							if ((Object.keys(this.oGardenerSetting).length) && (sKey in this.oGardenerSetting)) delete this.oGardenerSetting[sKey];
+						}
 					} else if ((loop1 < 4) && (loop2 < 4) && (tileCheck1(loop1, loop2, idAlt) && (aTileId[loop1 + 1][loop2 + 1] != idJuicy))) {
 						nStatus1 = Math.min(nStatus1, 4);
 						aPointX.push(loop1);
@@ -679,7 +700,7 @@ let oEleCC = {
 						tileHarvest(aPointX[loop1] + 2, aPointY[loop1] + 2, id);
 					}
 					// Clear Garrdener setting 
-					this.oGardenSetting = {};
+					this.oGardenerSetting = {};
 					break;
 				default:
 					this.Flags['GardenJuicer'] = false;
@@ -786,9 +807,6 @@ let oEleCC = {
 	GrimoireIsEV: function() {
 		return (Game.season == 'easter' || Game.season == 'valentines') ? 1 : 0;
 	},
-	GrimoireChoose: function(arr) {
-		return arr[oEleCC.oLocalMath.floor(oEleCC.oLocalMath.random() * arr.length)];
-	},
 	GrimoireIsFall: function(spell, obj) {
 		let obj1       = obj || {};
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
@@ -814,7 +832,7 @@ let oEleCC = {
 			if (Game.BuildingsOwned >= 10 && oEleCC.oLocalMath.random() < 0.25) choices.push('building special');
 			if (oEleCC.oLocalMath.random() < 0.15)                              choices = ['cookie storm drop'];
 			if (oEleCC.oLocalMath.random() < 0.0001)                            choices.push('free sugar lump');
-			return oEleCC.GrimoireChoose(choices);
+			return choices[Math.floor(oEleCC.oLocalMath.random() * choices.length)];
 		},
 		fail: function(cycle) {
 			oEleCC.oLocalMath.random();oEleCC.oLocalMath.random();			// by shimmer.initFunc
@@ -824,7 +842,7 @@ let oEleCC = {
 			if (oEleCC.oLocalMath.random() < 0.1)   choices.push('cursed finger', 'elder frenzy');
 			if (oEleCC.oLocalMath.random() < 0.003) choices.push('free sugar lump');
 			if (oEleCC.oLocalMath.random() < 0.1)   choices = ['blab'];
-			return oEleCC.GrimoireChoose(choices);
+			return choices[Math.floor(oEleCC.oLocalMath.random() * choices.length)];
 		}
 	},
 	spellCheckHand: function(next) {
@@ -854,9 +872,26 @@ let oEleCC = {
 	//   55(MP  38, Fate  32):Fate * 1 minimum charge time
 	//  321(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
 	//  326(MP  83, Fate  59):Fate + Stretch
-	// Wizard tower Lvl.10
+	// Lvl.2
+	//   14(MP  23, Fate  23):Fate * 1
+	//  314(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
+	// Lvl.3
+	//    8(MP  23, Fate  23):Fate * 1
+	// Lvl.4
+	//    3(MP  23, Fate  23):Fate * 1
+	// Lvl.5
+	//    1(MP  24, Fate  24):Fate * 1
+	// Lvl.6
+	//    1(MP  27, Fate  26):Fate * 1
+	// Lvl.7
+	//    1(MP  29, Fate  27):Fate * 1
+	// Lvl.8
+	//    1(MP  31, Fate  28):Fate * 1
+	// Lvl.9
+	//    1(MP  32, Fate  29):Fate * 1
+	// Lvl.10
 	//    1(MP  34, Fate  30):Fate * 1
-	//  500(MP 101, Fate  70):Fate * 2(Fate -> SellAll -> Buy1 -> Fate)
+	//  500(MP 101, Fate  70):Fate * 2(Fate -> Sell499 -> Fate)
 	// 1400(MP 150, Fate 100):Fate * 3(Random(Fate) -> Random(Fate) -> SellAll -> Buy1 -> Fate)
 	ClickSpellCheckTimer: function() {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
