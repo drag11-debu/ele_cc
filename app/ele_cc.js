@@ -38,6 +38,7 @@ let oEleCC = {
 	oGardenerSetting:        {},
 	oGardenReRollSet:        {},
 	sGardenReRollExp:        '',
+	nGardenReRollCnt:        0,
 	aGardenEffect:           ['goldenClover', 'keenmoss', 'nursetulip', 'tidygrass', 'everdaisy', 'elderwort', 'whiskerbloom'],
 	aGardenDrop:             ['bakerWheat', 'bakeberry', 'ichorpuff', 'greenRot', 'duketater', 'drowsyfern', 'queenbeetLump'],
 	// For Sell Godzamok
@@ -57,8 +58,37 @@ let oEleCC = {
 	],
 	// For Auto Cast
 	oLocalMath:              {},
+	// Required Wizard tower amount
+	// Wizard tower Lvl.1
+	//   21(MP  23, Fate  23):Fate * 1
+	//   55(MP  38, Fate  32):Fate * 1 minimum charge time
+	//  321(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
+	//  326(MP  83, Fate  59):Fate + Stretch
+	// Lvl.2
+	//   14(MP  23, Fate  23):Fate * 1
+	//  314(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
+	// Lvl.3
+	//    8(MP  23, Fate  23):Fate * 1
+	// Lvl.4
+	//    3(MP  23, Fate  23):Fate * 1
+	// Lvl.5
+	//    1(MP  24, Fate  24):Fate * 1
+	// Lvl.6
+	//    1(MP  27, Fate  26):Fate * 1
+	// Lvl.7
+	//    1(MP  29, Fate  27):Fate * 1
+	// Lvl.8
+	//    1(MP  31, Fate  28):Fate * 1
+	// Lvl.9
+	//    1(MP  32, Fate  29):Fate * 1
+	// Lvl.10
+	//    1(MP  34, Fate  30):Fate * 1
+	//  500(MP 101, Fate  70):Fate * 2(Fate -> Sell499 -> Fate)
+	// 1400(MP 150, Fate 100):Fate * 3(Random(Fate) -> Random(Fate) -> SellAll -> Buy1 -> Fate)
+	aDoubleCastMP:           [[21, 23],[14, 23],[ 8, 23],[ 3, 23],[ 1, 24],
+	                          [ 1, 26],[ 1, 27],[ 1, 28],[ 1, 29],[ 1, 30]],
 	// For Auto Cast(2)
-	// Excluded: Wizard tower (Manabloom)
+	// Excluded: Wizard tower ('Manabloom'), 'Frenzy'
 	aAutoCastTarget:         [
 		'High-five', 'Congregation', 'Luxuriant harvest', 'Ore vein', 'Oiled-up', 'Juicy profits',
 		'Fervent adoration', 'Delicious lifeforms', 'Breakthrough', 'Righteous cataclysm', 'Golden ages',
@@ -87,12 +117,9 @@ let oEleCC = {
 	// For Auto Garden Juicer
 	bAutoJuicerReRoll:       false,
 	// For Sugar auto harvest
-	nSugarDesire:            0,
+	nSugarDesire1:           0,
+	nSugarDesire2:           0,
 	sSugarExp:               '',
-	bRigidel:                false,
-	nRigidelSell:            0,
-	nPrevGod:                -1,
-	sRigidelSell:            'Mine',
 	// log
 	aLog:                    [],
 	//--------------------------------------------------------------------------------------------------------------
@@ -133,14 +160,14 @@ let oEleCC = {
 		switch (name) {
 			case 'Init':         func = this.InitTimer.bind(this);         freq =  500; break;
 			case 'SecTimer':     func = this.SecTimer.bind(this);          freq =  500; break;
-			case 'BigCookie':    func = Game.ClickCookie.bind(this);         freq =    4; break;
+			case 'BigCookie':    func = Game.ClickCookie.bind(this);       freq =    4; break;
 			case 'SellGodzamok': func = this.SellGodzamokTimer.bind(this); freq = this.nSellGodzamokFreq; break;
 			case 'AutoBuyZ':     func = this.BuyZ.bind(this);              freq = 1000; break;
 			case 'ReRollGarden': func = this.ReRollGardenTimer.bind(this); freq =  300; break;
 			case 'ReRollSugar':  func = this.ClickSugarTimer.bind(this);   freq =  500; break;
 		}
 		if (func) {
-			func();
+			//func();
 			if(this.Timers[name] == 0) this.Timers[name] = setInterval(func, freq);
 		}
 	},
@@ -149,6 +176,14 @@ let oEleCC = {
 			clearInterval(this.Timers[name]);
 			this.Timers[name] = 0; 
 		}
+	},
+	//--------------------------------------------------------------------------------------------------------------
+	// Export
+	WriteSave: function() {
+		// V2.031 Bug? fix
+		let oPantheon = Game.Objects['Temple'].minigame;
+		if (oPantheon && (-1 in oPantheon.slot)) delete oPantheon.slot[-1];
+		return Game.WriteSave(1);
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// Log,popup,notify
@@ -173,8 +208,8 @@ let oEleCC = {
 	// 1Sec Timer
 	SecTimer: function() {
 		this.nSecCount = (this.nSecCount + 1) % 7200;
-		if (this.Flags['Golden'])                                     this.ClickCookieGolden();
-		if (this.Flags['GSwitch'])                                    this.ClickGoldenSwitch();
+		if (this.Flags['Golden'])                                   this.ClickCookieGolden();
+		if (this.Flags['GSwitch'])                                  this.ClickGoldenSwitch();
 		if ((this.nSecCount % 2   == 0) && this.Flags['BuyEP'])     this.BuyEP();
 		if ((this.nSecCount % 2   == 0) && this.Flags['Fortune'])   this.ClickFortune();
 		if ((this.nSecCount % 2   == 0) && this.Flags['Dragon'])    this.ClickDragon();
@@ -192,29 +227,14 @@ let oEleCC = {
 			if ((age >= Game.lumpMatureAge) && (age < Game.lumpRipeAge)) {
 				// Sugar type check
 				switch (Game.lumpCurrentType) {
-					case 1:  this.nSugarDesire = 2; break; // bifurcated
-					case 2:  this.nSugarDesire = 7; break; // golden
-					case 3:  this.nSugarDesire = 2; break; // meaty
-					case 4:  this.nSugarDesire = 3; break; // caramelized
-					default: this.nSugarDesire = 1;
+					case 1:  this.nSugarDesire1 = 2; break; // bifurcated
+					case 2:  this.nSugarDesire1 = 7; break; // golden
+					case 3:  this.nSugarDesire1 = 2; break; // meaty
+					case 4:  this.nSugarDesire1 = 3; break; // caramelized
+					default: this.nSugarDesire1 = 1;
 				}
-				this.nSugarDesire += Game.lumps;
-				// Rigidel check
-				this.bRigidel     =  false;
-				this.nRigidelSell =  0;
-				this.nPrevGod     =  -1;
-//				let oPantheon = Game.Objects['Temple'].minigame;
-//				if (oPantheon && (!Game.hasGod('order')) && (oPantheon.swaps >= 2)) {
-//					this.bRigidel = true;
-//					this.nPrevGod = oPantheon.slot[0];
-//					oPantheon.slotGod(oPantheon.gods['order'], 0);
-//					if (Game.BuildingsOwned % 10) {
-//						this.nRigidelSell = Game.BuildingsOwned % 10;
-//						Game.Objects[this.sRigidelSell].sell(this.nRigidelSell);
-//					}
-//					Game.computeLumpTimes();
-//				}
-				this.sSugarExp    =  Game.WriteSave(1);
+				this.nSugarDesire2 = this.nSugarDesire1 + Game.lumps;
+				this.sSugarExp     = this.WriteSave();
 				this.TimerStart('ReRollSugar');
 			}
 		}
@@ -241,7 +261,7 @@ let oEleCC = {
 					}
 					// Auto Cast spell(1)
 					if (this.Flags['AutoCast1'] && (!Game.hasBuff('Clot'))) {
-						if (this.CastSpell('hand of fate')) {
+						if (this.CastSpell('hand of fate', this.Flags['AutoCastD'])) {
 							this.Flags['AutoCast1'] = false;
 							this.Flags['AutoCastD'] = false;
 							this.Notify('Bibbidi-bobbidi...poo...', false);
@@ -270,13 +290,26 @@ let oEleCC = {
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// Cast Spell
-	CastSpell: function(name) {
+	CastSpell: function(name, double) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells[name]))) {
 			oGrimoire.castSpell(oGrimoire.spells[name]);
+			let nLevel = Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9);
+			if (double && (oGrimoire.magic >= this.aDoubleCastMP[nLevel][0])) {
+				let nSell = Game.Objects['Wizard tower'].amount - this.aDoubleCastMP[nLevel][1];
+				Game.Objects['Wizard tower'].sell(nSell, 1);
+				setTimeout(this.CastDouble, 700, name, nSell);
+			}
 			return true;
 		} else
 			return false;
+	},
+	CastDouble: function(name, buy) {
+		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
+		if (oGrimoire) {
+			oGrimoire.castSpell(oGrimoire.spells[name]);
+			Game.Objects['Wizard tower'].buy(buy);
+		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// Sell Godzamok
@@ -300,8 +333,8 @@ let oEleCC = {
 		if (this.nSellGodzamokCnt % 2 == 1) {
 			if ((this.GetBuffTime('Dragonflight') <= 10) && (this.GetBuffTime('Click frenzy') <= 10) && (this.GetBuffTime('Elder frenzy') <= 10)) {
 				this.TimerStop('SellGodzamok');
-				this.oSellGodzamokAmount = {};
 				this.Notify('<b>Sell Godzamok</b> was done.<b>' + ((this.nSellGodzamokCnt + 1) / 2) + '</b> count' + (this.nSellGodzamokCnt > 1 ? 's' : '') + '!<br>' + Beautify(this.nSellGodzamokBeforeAmt) + '<br>' + Beautify(Game.cookies), true);
+				this.oSellGodzamokAmount = {};
 				if (this.Flags['AutoBuyZ']) this.TimerStart('AutoBuyZ');
 			} else {
 				for (const loop1 of this.aSellGodzamokTarget) {
@@ -352,7 +385,7 @@ let oEleCC = {
 	//--------------------------------------------------------------------------------------------------------------
 	// Auto-Buy Elder Pledge
 	BuyEP: function() {
-		if ((Game.UpgradesInStore.indexOf(Game.Upgrades['Elder Pledge']) != -1) && (!Game.Upgrades['Elder Pledge'].bought)) {
+		if ((Game.UpgradesInStore.indexOf(Game.Upgrades['Elder Pledge']) != -1) && (!Game.Upgrades['Elder Pledge'].bought) && (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0) && (this.Timers['ReRollSugar'] == 0)) {
 			Game.Upgrades['Elder Pledge'].buy();
 			this.Notify('Auto-Buy <b>Elder Pledge</b>.', false);
 		}
@@ -497,6 +530,19 @@ let oEleCC = {
 		this.oGardenerSetting    = {};
 		this.Flags['Gardener'] = false;
 	},
+	// ReRoll garden for drop
+	ReRollGardenerOnce: function(savedata) {
+		if (!this.Flags['Gardener']) {
+			// ReRoll
+			Game.ImportSaveCode(savedata);
+			// Clear Garrdener setting 
+			this.oGardenerSetting = {};
+			// Garden check
+			this.ClickGardener();
+			// Clear Garrdener setting 
+			this.oGardenerSetting = {};
+		}
+	},
 	//--------------------------------------------------------------------------------------------------------------
 	// ReRoll garden for new seed
 	ReRollGardenStart: function(savedata) {
@@ -510,11 +556,14 @@ let oEleCC = {
 					}
 				}
 				this.sGardenReRollExp = savedata;
+				this.nGardenReRollCnt = 0;
 				this.TimerStart('ReRollGarden');
-			} else if (this.Timers['ReRollGarden'] > 0) { 		
+			} else if (this.Timers['ReRollGarden'] > 0) {
 				this.TimerStop('ReRollGarden');
+				this.Notify('Garden ReRoll count: ' + this.nGardenReRollCnt, false);
 				this.oGardenReRollSet = {};
 				this.sGardenReRollExp = '';
+				this.nGardenReRollCnt = 0;
 			}
 		}
 	},
@@ -548,25 +597,14 @@ let oEleCC = {
 		}
 		if (bResult) {
 			this.TimerStop('ReRollGarden');
+			this.Notify('Garden ReRoll count: ' + this.nGardenReRollCnt, false);
 			this.oGardenReRollSet = {};
 			this.sGardenReRollExp = '';
+			this.nGardenReRollCnt = 0;
 		} else {
 			// ReRoll
+			this.nGardenReRollCnt++;
 			Game.ImportSaveCode(this.sGardenReRollExp);
-		}
-	},
-	//--------------------------------------------------------------------------------------------------------------
-	// ReRoll garden for drop
-	ReRollGardenerOnce: function(savedata) {
-		if (!this.Flags['Gardener']) {
-			// ReRoll
-			Game.ImportSaveCode(savedata);
-			// Clear Garrdener setting 
-			this.oGardenerSetting = {};
-			// Garden check
-			this.ClickGardener();
-			// Clear Garrdener setting 
-			this.oGardenerSetting = {};
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -723,7 +761,7 @@ let oEleCC = {
 					}
 					if (this.Flags['GardenJuicer']) {
 						this.nGardenJuicerQBrange = this.nGardenJuicerQBrangeDef;
-						this.sGardenJuicerExp     = Game.WriteSave(1);
+						this.sGardenJuicerExp     = this.WriteSave();
 						for (let loop1 = 0; loop1 < 6; loop1++) {
 							for (let loop2 = 0; loop2 < 6; loop2++) {
 								let tile = oGarden.getTile(loop1, loop2);
@@ -761,7 +799,6 @@ let oEleCC = {
 					}
 					if (this.nGardenJuicerReRollCnt > 400) {
 						bResult = true;
-						this.Notify('Hmmm...', false);
 					} else if (nTotal == 0) {
 						bResult = true;
 					} else if (this.aGardenJuicerTarget.includes('queenbeet')) {
@@ -769,6 +806,7 @@ let oEleCC = {
 					} else {
 						bResult = (nCnt >= Math.ceil(nTotal / 2));
 					}
+					if (bResult) this.Notify((this.nGardenJuicerReRollCnt > 400 ? 'Hmmm...' : '') + 'Garden Juicer ReRoll count: ' + this.nGardenJuicerReRollCnt, false);
 				}
 				if (bResult) {
 					this.oGardenJuicerSet       = {};
@@ -815,18 +853,17 @@ let oEleCC = {
 		if (typeof obj1.failChanceAdd  !== 'undefined') failChance += obj1.failChanceAdd;
 		if (typeof obj1.failChanceMult !== 'undefined') failChance *= obj1.failChanceMult;
 		if (typeof obj1.failChanceMax  !== 'undefined') failChance =  Math.max(failChance, obj1.failChanceMax);
-		return ((!spell.fail || (oEleCC.oLocalMath.random() < (1 - failChance))) ? true : false);
+		return ((!spell.fail || (Math.random() < (1 - failChance))) ? true : false);
 	},
 	GrimoireHand: {
 		failFunc: function(fail) {
-			let golden = 0; /* game */
-			return fail + 0.15 * golden;
+			return fail + 0.15 * Game.shimmerTypes['golden'].n;
 		},
 		win: function(cycle) {
 			oEleCC.oLocalMath.random();oEleCC.oLocalMath.random();			// by shimmer.initFunc
 			for(let loop1 = 0;loop1 < cycle; loop1++) oEleCC.oLocalMath.random();	// by PlaySound or season shimmer
 			let choices = [];
-			choices.push('frenzy', 'multiply cookies');
+			choices.push('frenzy', 'lucky');
 			if (!Game.hasBuff('Dragonflight'))                                  choices.push('click frenzy');
 			if (oEleCC.oLocalMath.random() < 0.1)                               choices.push('cookie storm', 'cookie storm', 'blab');
 			if (Game.BuildingsOwned >= 10 && oEleCC.oLocalMath.random() < 0.25) choices.push('building special');
@@ -866,58 +903,37 @@ let oEleCC = {
 		this.Flags['AutoCastT'] = false;
 	},
 	// Auto Cast Check -> Auto Cast spell(2)
-	// Required Wizard tower amount
-	// Wizard tower Lvl.1
-	//   21(MP  23, Fate  23):Fate * 1
-	//   55(MP  38, Fate  32):Fate * 1 minimum charge time
-	//  321(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
-	//  326(MP  83, Fate  59):Fate + Stretch
-	// Lvl.2
-	//   14(MP  23, Fate  23):Fate * 1
-	//  314(MP  82, Fate  59):Fate * 2(Fate -> Sell300 -> Fate)
-	// Lvl.3
-	//    8(MP  23, Fate  23):Fate * 1
-	// Lvl.4
-	//    3(MP  23, Fate  23):Fate * 1
-	// Lvl.5
-	//    1(MP  24, Fate  24):Fate * 1
-	// Lvl.6
-	//    1(MP  27, Fate  26):Fate * 1
-	// Lvl.7
-	//    1(MP  29, Fate  27):Fate * 1
-	// Lvl.8
-	//    1(MP  31, Fate  28):Fate * 1
-	// Lvl.9
-	//    1(MP  32, Fate  29):Fate * 1
-	// Lvl.10
-	//    1(MP  34, Fate  30):Fate * 1
-	//  500(MP 101, Fate  70):Fate * 2(Fate -> Sell499 -> Fate)
-	// 1400(MP 150, Fate 100):Fate * 3(Random(Fate) -> Random(Fate) -> SellAll -> Buy1 -> Fate)
 	ClickSpellCheckTimer: function() {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
 			if ((!this.Flags['AutoCast1']) && (!this.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate'])) && (oGrimoire.magic == oGrimoire.magicM)) {
 				let spellResult1 = this.spellCheckHand(1);
 				let spellResult2 = this.spellCheckHand(2);
-				if (spellResult1 == 'building special') {
-					this.Flags['AutoCast1'] = true;
-					this.Flags['AutoCastD'] = (spellResult2 == 'building special');
-					this.Notify('Maybe I can cast <b>' + spellResult1 + (this.Flags['AutoCastD'] ? 'Double!!' : '') + '</b>', false);
+				let sMsg         = '';
+				if ((spellResult1 == 'building special') || (spellResult1 == 'frenzy')) {
+					if ((spellResult2 == 'click frenzy') && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])) {
+						this.Flags['AutoCast2'] = true;
+						this.Flags['AutoCastD'] = true;
+					} else {
+						this.Flags['AutoCast1'] = true;
+						this.Flags['AutoCastD'] = (spellResult2 == 'building special');
+					}
 				} else if ((spellResult1 == 'click frenzy') || (spellResult1 == 'elder frenzy')) {
 					this.Flags['AutoCast2'] = true;
-					this.Flags['AutoCastD'] = (spellResult2 == 'building special');
-					this.Notify('Maybe I can cast <b>' + spellResult1 + (this.Flags['AutoCastD'] ? ' and ' + spellResult2 : '') + '</b>', false);
+					this.Flags['AutoCastD'] = ((spellResult2 == 'building special') || (spellResult1 == 'frenzy') || (((spellResult2 == 'click frenzy') || (spellResult2 == 'elder frenzy')) && (spellResult1 != spellResult2)));
 				} else {
-					this.CastSpell('hand of fate');
-					this.Notify('Hahaha...', false);
+					this.CastSpell('hand of fate', false);
+					sMsg = 'Hahaha...';
 				}
+				if (!sMsg) sMsg = 'Maybe I can cast <b>' + spellResult1 + (this.Flags['AutoCastD'] ? ' and ' + spellResult2 : '') + '</b>';
+				this.Notify(sMsg, false);
 			}
 			// Auto Cast spell(2)
 			if (this.Flags['AutoCast2']) {
 				if (this.AnyHasBuff(this.aAutoCastTarget) && 
 				    (!this.AnyHasBuff(['Clot', 'Dragonflight', 'Click frenzy', 'Elder frenzy'])) &&
 				    (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0)) {
-					if (this.CastSpell('hand of fate')) {
+					if (this.CastSpell('hand of fate', this.Flags['AutoCastD'])) {
 						this.Flags['AutoCast2'] = false;
 						this.Flags['AutoCastD'] = false;
 						this.Notify('Bibbidi-bobbidi...baa...', false);
@@ -930,16 +946,13 @@ let oEleCC = {
 	// Sugar auto harvest
 	ClickSugarTimer: function() {
 		Game.clickLump();
-		if (this.nSugarDesire <= Game.lumps) {
+		if (this.nSugarDesire2 <= Game.lumps) {
 			// Rigidel restore
-//			let oPantheon = Game.Objects['Temple'].minigame;
-//			if (oPantheon && this.bRigidel) {
-//				if (this.nRigidelSell >  0)  Game.Objects['Mine'].buy(this.nRigidelSell);
-//				if (this.nPrevGod     != -1) oPantheon.slotGod(oPantheon.godsById[this.nPrevGod], 0);
-//			}
-			this.nSugarDesire = 0;
-			this.sSugarExp    = '';
 			this.TimerStop('ReRollSugar');
+			this.Notify('I got ' + this.nSugarDesire1 + ' sugar' + (this.nSugarDesire1 > 1 ? 's' : '') + '!', false);
+			this.nSugarDesire1 = 0;
+			this.nSugarDesire2 = 0;
+			this.sSugarExp     = '';
 		} else {
 			// ReRoll
 			Game.ImportSaveCode(this.sSugarExp);

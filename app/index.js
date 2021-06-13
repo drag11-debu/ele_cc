@@ -11,14 +11,18 @@ let sProcessDir  = '';
 
 function MinTimer() {
 	// AutoLog
-	view.webContents.executeJavaScript("logStr: { oEleCC.GetLog() }", false).then(function(logStr) {
-		fs.appendFile(path.join(sProcessDir, 'log.txt'), logStr + '\r\n', (error, result) => {
-			if (error) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Log error.', false);");
+	if (nMinTimerCnt % 5 == 0) {
+		view.webContents.executeJavaScript("sLog: { oEleCC.GetLog() }", false).then(function(sLog) {
+			if (sLog) {
+				fs.appendFile(path.join(sProcessDir, 'log.txt'), sLog + '\r\n', (error, result) => {
+					if (error) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Log error.', false);");
+				});
+			}
 		});
-	});
+	}
 	// AutoBackup
 	if (nMinTimerCnt == 0) {
-		view.webContents.executeJavaScript("savedata: { Game.WriteSave(1) }", false).then(function(savedata) {
+		view.webContents.executeJavaScript("savedata: { oEleCC.WriteSave() }", false).then(function(savedata) {
 			let dt = new Date();
 			let sTime =
 				 dt.getFullYear()                               +
@@ -156,7 +160,7 @@ app.on('ready', () => {
 		view.webContents.executeJavaScript("oEleCC.ReRollGardenerOnce('" + savedata + "');");
 	});
 	ipcMain.handle('QUICK_EXPORT', (event, _) => {
-		view.webContents.executeJavaScript("savedata: {Game.WriteSave(1)}", false).then((savedata) => { event.sender.send('SAVEDATA_SET', savedata); });
+		view.webContents.executeJavaScript("savedata: {oEleCC.WriteSave()}", false).then((savedata) => { event.sender.send('SAVEDATA_SET', savedata); });
 	});
 	ipcMain.handle('QUICK_IMPORT', (event, savedata) => {
 		view.webContents.executeJavaScript("Game.ImportSaveCode('" + savedata + "');");
