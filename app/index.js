@@ -138,6 +138,7 @@ app.on('ready', () => {
 		view.webContents.executeJavaScript(onoff ? "oEleCC.AutoCastStart();" : "oEleCC.AutoCastStop();");
 	});
 	ipcMain.handle('BUY_EP',            (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = " + onoff + ";"); });
+	ipcMain.handle('BUY_A',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyA']     = " + onoff + ";"); });
 	ipcMain.handle('BUY_Z',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = " + onoff + ";"); });
 	ipcMain.handle('CLICK_FORTUNE',     (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Fortune']      = " + onoff + ";"); });
 	ipcMain.handle('CLICK_DRAGON',      (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Dragon']       = " + onoff + ";"); });

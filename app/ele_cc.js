@@ -1,7 +1,8 @@
 let oEleCC = {
 	//--------------------------------------------------------------------------------------------------------------
 	// Fields
-	name:  'Electronical Cookkie Creator',
+	name:     'Electronical Cookkie Creator',
+	thinking: '',
 	// setInterval Timer ID
 	Timers: {
 		'Init':         0,
@@ -26,6 +27,7 @@ let oEleCC = {
 		'AutoCast1':    false,
 		'AutoCast2':    false,
 		'AutoCastD':    false,
+		'AutoBuyA':     false,
 		'AutoBuyZ':     false,
 		'SellGodzamok': false,
 		'Gardener':     false,
@@ -96,6 +98,7 @@ let oEleCC = {
 	],
 	// For Auto-Buy PlanZ
 	// Excluded: Wizard tower (keep amounts for magic meter)
+	nBuyAUpgradeRate:        1.1,
 	nBuyZWishRate:           1.5,
 	nBuyZUpgradeRate:        1.2,
 	aBuyZTarget1:            ['Fractal engine', 'Idleverse'],
@@ -215,6 +218,7 @@ let oEleCC = {
 		if ((this.nSecCount % 2   == 0) && this.Flags['Dragon'])    this.ClickDragon();
 		if ((this.nSecCount % 2   == 0) && this.Flags['Wrinkler'])  this.ClickWrinkler();
 		if ((this.nSecCount % 2   == 0) && this.Flags['AutoCastT']) this.ClickSpellCheckTimer();
+		if ((this.nSecCount % 2   == 0) && this.Flags['AutoBuyA'])  this.BuyA();
 		if  (this.nSecCount % 120 == 0) {
 			if (this.Flags['Gardener']) {
 				this.ClickGardener();
@@ -391,7 +395,94 @@ let oEleCC = {
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
-	// Auto-Buy Plan Z
+	// Auto-Buy
+	GetSynergy: function(me) { // from main.js
+		let synergyBoost  = 0;
+//		if (me.amount > 0) {
+//			if (me.name == 'Grandma') {
+//				for (let loop1 in Game.GrandmaSynergies) {
+//					if (Game.Has(Game.GrandmaSynergies[loop1])) {
+//						let other = Game.Upgrades[Game.GrandmaSynergies[loop1]].buildingTie;
+//						let mult  = me.amount * 0.01 * (1 / (other.id - 1));
+//						synergyBoost += (other.storedTotalCps * Game.globalCpsMult) - (other.storedTotalCps * Game.globalCpsMult) / (1 + mult);
+//					}
+//				}
+//			} else if (me.name == 'Portal' && Game.Has('Elder Pact')) {
+//				synergyBoost += (me.amount * 0.05 * Game.Objects['Grandma'].amount) * Game.globalCpsMult;
+//			}
+//			for (let loop1 in me.synergies) {
+//				let it = me.synergies[loop1];
+//				if (Game.Has(it.name)) {
+//					let weight = 0.05;
+//					let other  = it.buildingTie1;
+//					if (me == it.buildingTie1) {
+//						weight = 0.001;
+//						other  = it.buildingTie2;
+//					}
+//					synergyBoost += (other.storedTotalCps * Game.globalCpsMult) - (other.storedTotalCps * Game.globalCpsMult) / (1 + me.amount * weight);
+//				}
+//			}
+//		}
+		if (me.amount == 0) 
+			synergyBoost = me.baseCps;
+		else if (synergyBoost == 0) 
+//			synergyBoost = me.storedTotalCps * Game.globalCpsMult / me.amount;
+			synergyBoost = me.cps(me);
+		else
+			synergyBoost = synergyBoost / me.amount;
+		return synergyBoost;
+	},
+	BuyA: function() {
+		if (this.Timers['SellGodzamok'] == 0) {
+			// Upgrades
+			let nPrice        = 0;
+			let nWishUpgPrice = 0;
+			let sWishUpgName  = '';
+			for (const loop1 in Game.UpgradesInStore) {
+				let me = Game.UpgradesInStore[loop1];
+				if (!me.isVaulted() && (me.pool != 'toggle') && (me.pool != 'tech')) {
+					nPrice = me.getPrice();
+					if ((nPrice > Game.cookies) && (nPrice < Game.cookies * this.nBuyAUpgradeRate) && (nWishUpgPrice == 0)) {
+						nWishUpgPrice = nPrice;
+						sWishUpgName  = me.name;
+					} else if (nPrice < Game.cookies) {
+						me.buy(1);
+//						this.Notify('Auto-Buy <b>' + me.name + '</b>.', false);
+					}
+				}
+			}
+			if (nWishUpgPrice == 0) {
+				// Buildings
+				let maxName    = '';
+				let maxPerf    = 0;
+				for (const loop1 in Game.ObjectsById) {
+					let me = Game.ObjectsById[loop1];
+					if (!me.locked) {
+						if (maxPerf == 0) {
+							maxName = me.name;
+							maxPerf = (me.amount == 0) ? 1 : (this.GetSynergy(me) * 10e15 / me.price);
+						} else {
+							let thisPerf = (this.GetSynergy(me) * 10e15 / me.price);
+							if (maxPerf < thisPerf) {
+								maxName = me.name;
+								maxPerf = thisPerf;
+							}
+						}
+					}
+				}
+				if (maxName != '') {
+					if (Game.Objects[maxName].price < Game.cookies) {
+						Game.Objects[maxName].buy(1);
+//						this.Notify('Auto-Buy <b>' + maxName + '</b>.', false);
+					} else {
+						this.thinking = 'I want to buy <b>' + maxName + '(' + Beautify(Game.Objects[maxName].price) + ')</b>...';
+					}
+				}
+			} else {
+				this.thinking = 'I want to buy <b>' + sWishUpgName + '(' + Beautify(nWishUpgPrice) + ')</b>...';
+			}
+		}
+	},
 	BuyZ: function() {
 		if (this.Timers['SellGodzamok'] == 0) {
 			// Upgrades
@@ -458,7 +549,7 @@ let oEleCC = {
 					}
 				}
 			} else {
-				this.Notify('Want to buy <b>' + sWishUpgName + '(' + Beautify(nWishUpgPrice) + ')</b>...', true);
+				this.thinking = 'Want to buy <b>' + sWishUpgName + '(' + Beautify(nWishUpgPrice) + ')</b>...';
 			}
 			if (!bBought) this.TimerStop('AutoBuyZ');
 		}
@@ -842,9 +933,10 @@ let oEleCC = {
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// Auto Spell Checker
-	GrimoireIsEV: function() {
+	GrimoireGetChange: function() {
 		return (Game.season == 'easter' || Game.season == 'valentines') ? 1 : 0;
 	},
+	// Can't use this!? vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 	GrimoireIsFall: function(spell, obj) {
 		let obj1       = obj || {};
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
@@ -882,11 +974,12 @@ let oEleCC = {
 			return choices[Math.floor(oEleCC.oLocalMath.random() * choices.length)];
 		}
 	},
-	spellCheckHand: function(next) {
+	// Can't use this!? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+	spellCheckHand: function(next, change) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
 			this.oLocalMath.seedrandom(Game.seed + '/' + (oGrimoire.spellsCastTotal + next - 1));
-			return this.GrimoireIsFall(this.GrimoireHand) ? this.GrimoireHand.win(this.GrimoireIsEV()) : this.GrimoireHand.fail(this.GrimoireIsEV());
+			return this.GrimoireIsFall(this.GrimoireHand) ? this.GrimoireHand.win(change) : this.GrimoireHand.fail(change);
 		} else
 			return '';
 	},
@@ -907,9 +1000,19 @@ let oEleCC = {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
 			if ((!this.Flags['AutoCast1']) && (!this.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate'])) && (oGrimoire.magic == oGrimoire.magicM)) {
-				let spellResult1 = this.spellCheckHand(1);
-				let spellResult2 = this.spellCheckHand(2);
-				let sMsg         = '';
+				let spellResult1  = this.spellCheckHand(1, this.GrimoireGetChange());
+				let spellResult2  = this.spellCheckHand(2, this.GrimoireGetChange());
+				//let spellResult1C = this.spellCheckHand(1, 1);
+				//let spellResult2C = this.spellCheckHand(2, 1);
+				//if (((spellResult1C == 'click frenzy') || (spellResult2C == 'click frenzy') || (spellResult1C == 'building special') || (spellResult2C == 'building special')) &&
+				//     (spellResult1  != 'click frenzy') && (spellResult2  != 'click frenzy') && (spellResult1C != 'building special') && (spellResult2C == 'building special')) {
+				//	spellResult1 = spellResult1C;
+				//	spellResult2 = spellResult2C;
+				//	if (Game.chimeType == 0) Game.chimeType = 1;
+				//} else if (Game.chimeType == 1) {
+				//	Game.chimeType = 0;
+				//}
+				let sMsg          = '';
 				if ((spellResult1 == 'building special') || (spellResult1 == 'frenzy')) {
 					if ((spellResult2 == 'click frenzy') && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])) {
 						this.Flags['AutoCast2'] = true;
@@ -961,8 +1064,8 @@ let oEleCC = {
 	//--------------------------------------------------------------------------------------------------------------
 	// Test
 	EleCCTest: function() {
-		this.Notify('Test:' + this.name + '<br>' + 
-			this.spellCheckHand(1) + ':' + this.spellCheckHand(2) + '<br>' +
+		this.Notify(this.thinking + '<br>' + 
+			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
 			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
 			false);
 	}
