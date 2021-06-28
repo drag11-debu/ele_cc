@@ -9,10 +9,10 @@ let idMinTimer   = 0;
 let nMinTimerCnt = 0;
 let sProcessDir  = '';
 
-function MinTimer() {
+let MinTimer = () => {
 	// AutoLog
 	if (nMinTimerCnt % 5 == 0) {
-		view.webContents.executeJavaScript("sLog: { oEleCC.GetLog() }", false).then(function(sLog) {
+		view.webContents.executeJavaScript("sLog: { oEleCC.GetLog() }", false).then((sLog) => {
 			if (sLog) {
 				fs.appendFile(path.join(sProcessDir, 'log.txt'), sLog + '\r\n', (error, result) => {
 					if (error) view.webContents.executeJavaScript("oEleCC.Notify('Auto-Log error.', false);");
@@ -22,7 +22,7 @@ function MinTimer() {
 	}
 	// AutoBackup
 	if (nMinTimerCnt == 0) {
-		view.webContents.executeJavaScript("savedata: { oEleCC.WriteSave() }", false).then(function(savedata) {
+		view.webContents.executeJavaScript("savedata: { oEleCC.WriteSave() }", false).then((savedata) => {
 			let dt = new Date();
 			let sTime =
 				 dt.getFullYear()                               +
@@ -54,8 +54,8 @@ app.on('ready', () => {
 	});
 
 	// Open Window
-	const lngWidth      = 1030;
-	const lngHeight     = 700;
+	const lngWidth      = 1000;
+	const lngHeight     = 600;
 	const lngHeadHeight = 64 + 2;
 	win = new BrowserWindow({
 		width:	            lngWidth,
@@ -72,6 +72,9 @@ app.on('ready', () => {
 		win = null;
 	});
 	win.loadURL('file://' + __dirname + '/index.html');
+	win.webContents.on('new-window', (ev,url) => {
+		shell.openExternal(url);
+	});
 
 	// Open View
 	view = new BrowserView({
@@ -160,6 +163,7 @@ app.on('ready', () => {
 	ipcMain.handle('REROLL_G_ONCE', (event, savedata) => {
 		view.webContents.executeJavaScript("oEleCC.ReRollGardenerOnce('" + savedata + "');");
 	});
+	ipcMain.handle('AUTO_TRADE',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoTrade']    = " + onoff + ";"); });
 	ipcMain.handle('QUICK_EXPORT', (event, _) => {
 		view.webContents.executeJavaScript("savedata: {oEleCC.WriteSave()}", false).then((savedata) => { event.sender.send('SAVEDATA_SET', savedata); });
 	});

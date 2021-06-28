@@ -29,7 +29,6 @@ body {
 	width:            100%;
 	height:           var(--webHeader-Height);
 	font-size:        12pt;
-	background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
 	background-color: #5f5f5f;
 	line-height:      2em;
 	overflow:         hidden;
@@ -93,9 +92,7 @@ body {
 		<div id="webHeaderA">
 			<span class="nowrapGroup"><input  type="checkbox" id="click_cookie"   class="check_box send_onoff" data-event="CLICK_COOKIE"   /><label class="check_box_label" for="click_cookie">BigCookie</label></span>
 			<span class="nowrapGroup"><input  type="checkbox" id="click_golden"   class="check_box send_onoff" data-event="CLICK_GOLDEN"   /><label class="check_box_label" for="click_golden">Golden</label></span>
-<!--
 			<span class="nowrapGroup"><input  type="checkbox" id="buy_auto_a"     class="check_box send_onoff" data-event="BUY_A"          /><label class="check_box_label" for="buy_auto_a">PlanA</label></span>
--->
 			<span class="nowrapGroup"><input  type="checkbox" id="click_switch"   class="check_box send_onoff" data-event="CLICK_SWITCH"   /><label class="check_box_label" for="click_switch">GSwitch</label></span>
 			<span class="nowrapGroup"><input  type="checkbox" id="click_cast"     class="check_box send_onoff" data-event="CLICK_CAST"     /><label class="check_box_label" for="click_cast">Cast</label></span>
 			<span class="nowrapGroup"><input  type="checkbox" id="sell_godzamok"  class="check_box send_onoff" data-event="SELL_GODZAMOK"  /><label class="check_box_label" for="sell_godzamok">Godzamok</label></span>
@@ -121,8 +118,9 @@ body {
 				</select>
 				<input  type="checkbox" id="click_juicer"    class="check_box send_onoff" data-event="GARDEN_JUICER"  /><label class="check_box_label" for="click_juicer">Juicer</label>
 				<button type="button"   id="reroll_garden"   class="send_savedata" data-event="REROLL_GARDEN" />ReRoll</button>
-				<button type="button"   id="reroll_g_once"   class="send_savedata" data-event="REROLL_G_ONCE" disabled />RRD</button>
+				<button type="button"   id="reroll_g_once"   class="send_savedata" data-event="REROLL_G_ONCE" />RRD</button>
 			</span>
+			<span class="nowrapGroup"><input  type="checkbox" id="auto_trade"     class="check_box send_onoff" data-event="AUTO_TRADE"     /><label class="check_box_label" for="auto_trade">Trade</label></span>
 			<span class="nowrapGroup"><input  type="checkbox" id="auto_backup"    class="check_box send_onoff" data-event="AUTO_BACKUP"    /><label class="check_box_label" for="auto_backup">Backup+Log</label></span>
 			<span class="nowrapGroup">
 				<button type="button"   id="quick_export"    class="send_only"     data-event="QUICK_EXPORT" />QExp</button>

@@ -32,7 +32,8 @@ let oEleCC = {
 		'SellGodzamok': false,
 		'Gardener':     false,
 		'GardenJuicer': false,
-		'AutoJuicer':   false
+		'AutoJuicer':   false,
+		'AutoTrade':    false
 	},
 	// 1Sec Timer couunt
 	nSecCount:               0,
@@ -58,8 +59,6 @@ let oEleCC = {
 		'Fortune #011','Fortune #012','Fortune #013','Fortune #014','Fortune #015','Fortune #016','Fortune #017',
 		'Fortune #100','Fortune #101','Fortune #102','Fortune #103','Fortune #104'
 	],
-	// For Auto Cast
-	oLocalMath:              {},
 	// Required Wizard tower amount
 	// Wizard tower Lvl.1
 	//   21(MP  23, Fate  23):Fate * 1
@@ -123,6 +122,25 @@ let oEleCC = {
 	nSugarDesire1:           0,
 	nSugarDesire2:           0,
 	sSugarExp:               '',
+	// For Auto Trade
+	aTradeBaseAmount:        [
+		[  3,  30],
+		[  3,  40],
+		[  4,  50],
+		[  4,  50],
+		[ 10,  60],
+		[ 10,  60],
+		[ 10,  60],
+		[ 10,  60],
+		[ 40,  90],
+		[ 40,  90],
+		[ 40,  90],
+		[ 40,  90],
+		[ 40, 100],
+		[100, 120],
+		[ 40, 120],
+		[100, 160]
+	],
 	// log
 	aLog:                    [],
 	//--------------------------------------------------------------------------------------------------------------
@@ -134,11 +152,11 @@ let oEleCC = {
 		document.getElementById('game').style.top       = 0;
 		// Block ADs
 		//document.getElementById('aqad').style.display = 'none';
+		// Change Cookies in bank font size
+		document.getElementById('cookies'          ).style.fontSize = '14pt';
 		// Change NewsTicker font size
 		document.getElementById('commentsText'     ).style.fontSize = '8pt';
 		document.getElementById('commentsTextBelow').style.fontSize = '8pt';
-		// Initialize
-		this.oLocalMath = Object.create(Math);
 		// Init timer
 		this.TimerStart('Init');
 	},
@@ -219,6 +237,9 @@ let oEleCC = {
 		if ((this.nSecCount % 2   == 0) && this.Flags['Wrinkler'])  this.ClickWrinkler();
 		if ((this.nSecCount % 2   == 0) && this.Flags['AutoCastT']) this.ClickSpellCheckTimer();
 		if ((this.nSecCount % 2   == 0) && this.Flags['AutoBuyA'])  this.BuyA();
+		if ((this.nSecCount % 60  == 0) && (this.Flags['AutoTrade']) && (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0) && (this.Timers['ReRollSugar'] == 0)) {
+			this.AutoTradeTimer();
+		}
 		if  (this.nSecCount % 120 == 0) {
 			if (this.Flags['Gardener']) {
 				this.ClickGardener();
@@ -228,7 +249,7 @@ let oEleCC = {
 		}
 		if ((this.nSecCount % 120 == 0) && (this.Flags['ReRollSugar']) && Game.canLumps() && (this.Timers['SellGodzamok'] == 0) && (this.Timers['AutoBuyZ'] == 0) && (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0) && (this.Timers['ReRollSugar'] == 0)) {
 			let age = Date.now() - Game.lumpT;
-			if ((age >= Game.lumpMatureAge) && (age < Game.lumpRipeAge)) {
+			if (age >= Game.lumpMatureAge) {
 				// Sugar type check
 				switch (Game.lumpCurrentType) {
 					case 1:  this.nSugarDesire1 = 2; break; // bifurcated
@@ -438,19 +459,20 @@ let oEleCC = {
 			let nPrice        = 0;
 			let nWishUpgPrice = 0;
 			let sWishUpgName  = '';
-			for (const loop1 in Game.UpgradesInStore) {
-				let me = Game.UpgradesInStore[loop1];
-				if (!me.isVaulted() && (me.pool != 'toggle') && (me.pool != 'tech')) {
-					nPrice = me.getPrice();
-					if ((nPrice > Game.cookies) && (nPrice < Game.cookies * this.nBuyAUpgradeRate) && (nWishUpgPrice == 0)) {
-						nWishUpgPrice = nPrice;
-						sWishUpgName  = me.name;
-					} else if (nPrice < Game.cookies) {
-						me.buy(1);
-//						this.Notify('Auto-Buy <b>' + me.name + '</b>.', false);
-					}
-				}
-			}
+//			// Buildings
+//			for (const loop1 in Game.UpgradesInStore) {
+//				let me = Game.UpgradesInStore[loop1];
+//				if (!me.isVaulted() && (me.pool != 'toggle') && (me.pool != 'tech')) {
+//					nPrice = me.getPrice();
+//					if ((nPrice > Game.cookies) && (nPrice < Game.cookies * this.nBuyAUpgradeRate) && (nWishUpgPrice == 0)) {
+//						nWishUpgPrice = nPrice;
+//						sWishUpgName  = me.name;
+//					} else if (nPrice < Game.cookies) {
+//						me.buy(1);
+////						this.Notify('Auto-Buy <b>' + me.name + '</b>.', false);
+//					}
+//				}
+//			}
 			if (nWishUpgPrice == 0) {
 				// Buildings
 				let maxName    = '';
@@ -936,8 +958,7 @@ let oEleCC = {
 	GrimoireGetChange: function() {
 		return (Game.season == 'easter' || Game.season == 'valentines') ? 1 : 0;
 	},
-	// Can't use this!? vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-	GrimoireIsFall: function(spell, obj) {
+	GrimoireIsFall: function(lMath, spell, obj) {
 		let obj1       = obj || {};
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		let failChance = oGrimoire.getFailChance(spell);
@@ -945,41 +966,41 @@ let oEleCC = {
 		if (typeof obj1.failChanceAdd  !== 'undefined') failChance += obj1.failChanceAdd;
 		if (typeof obj1.failChanceMult !== 'undefined') failChance *= obj1.failChanceMult;
 		if (typeof obj1.failChanceMax  !== 'undefined') failChance =  Math.max(failChance, obj1.failChanceMax);
-		return ((!spell.fail || (Math.random() < (1 - failChance))) ? true : false);
+		return ((!spell.fail || (lMath.random() < (1 - failChance))) ? true : false);
 	},
 	GrimoireHand: {
 		failFunc: function(fail) {
 			return fail + 0.15 * Game.shimmerTypes['golden'].n;
 		},
-		win: function(cycle) {
-			oEleCC.oLocalMath.random();oEleCC.oLocalMath.random();			// by shimmer.initFunc
-			for(let loop1 = 0;loop1 < cycle; loop1++) oEleCC.oLocalMath.random();	// by PlaySound or season shimmer
+		win: function(lMath, cycle) {
+			lMath.random();lMath.random();					// by shimmer.initFunc
+			for(let loop1 = 0;loop1 < cycle; loop1++) lMath.random();	// by PlaySound or season shimmer
 			let choices = [];
 			choices.push('frenzy', 'lucky');
-			if (!Game.hasBuff('Dragonflight'))                                  choices.push('click frenzy');
-			if (oEleCC.oLocalMath.random() < 0.1)                               choices.push('cookie storm', 'cookie storm', 'blab');
-			if (Game.BuildingsOwned >= 10 && oEleCC.oLocalMath.random() < 0.25) choices.push('building special');
-			if (oEleCC.oLocalMath.random() < 0.15)                              choices = ['cookie storm drop'];
-			if (oEleCC.oLocalMath.random() < 0.0001)                            choices.push('free sugar lump');
-			return choices[Math.floor(oEleCC.oLocalMath.random() * choices.length)];
+			if (!Game.hasBuff('Dragonflight'))                      choices.push('click frenzy');
+			if (lMath.random() < 0.1)                               choices.push('cookie storm', 'cookie storm', 'blab');
+			if (Game.BuildingsOwned >= 10 && lMath.random() < 0.25) choices.push('building special');
+			if (lMath.random() < 0.15)                              choices = ['cookie storm drop'];
+			if (lMath.random() < 0.0001)                            choices.push('free sugar lump');
+			return choices[Math.floor(lMath.random() * choices.length)];
 		},
-		fail: function(cycle) {
-			oEleCC.oLocalMath.random();oEleCC.oLocalMath.random();			// by shimmer.initFunc
-			for(let loop1 = 0;loop1 < cycle; loop1++) oEleCC.oLocalMath.random();	// by PlaySound or season shimmer
+		fail: function(lMath, cycle) {
+			lMath.random();lMath.random();					// by shimmer.initFunc
+			for(let loop1 = 0;loop1 < cycle; loop1++) lMath.random();	// by PlaySound or season shimmer
 			let choices = [];
 			choices.push('clot', 'ruin cookies');
-			if (oEleCC.oLocalMath.random() < 0.1)   choices.push('cursed finger', 'elder frenzy');
-			if (oEleCC.oLocalMath.random() < 0.003) choices.push('free sugar lump');
-			if (oEleCC.oLocalMath.random() < 0.1)   choices = ['blab'];
-			return choices[Math.floor(oEleCC.oLocalMath.random() * choices.length)];
+			if (lMath.random() < 0.1)   choices.push('cursed finger', 'elder frenzy');
+			if (lMath.random() < 0.003) choices.push('free sugar lump');
+			if (lMath.random() < 0.1)   choices = ['blab'];
+			return choices[Math.floor(lMath.random() * choices.length)];
 		}
 	},
-	// Can't use this!? ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	spellCheckHand: function(next, change) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
-			this.oLocalMath.seedrandom(Game.seed + '/' + (oGrimoire.spellsCastTotal + next - 1));
-			return this.GrimoireIsFall(this.GrimoireHand) ? this.GrimoireHand.win(change) : this.GrimoireHand.fail(change);
+			let oLocalMath = Object.create(Math);
+			oLocalMath.seedrandom(Game.seed + '/' + (oGrimoire.spellsCastTotal + next - 1));
+			return this.GrimoireIsFall(oLocalMath, this.GrimoireHand) ? this.GrimoireHand.win(oLocalMath, change) : this.GrimoireHand.fail(oLocalMath, change);
 		} else
 			return '';
 	},
@@ -1002,6 +1023,7 @@ let oEleCC = {
 			if ((!this.Flags['AutoCast1']) && (!this.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate'])) && (oGrimoire.magic == oGrimoire.magicM)) {
 				let spellResult1  = this.spellCheckHand(1, this.GrimoireGetChange());
 				let spellResult2  = this.spellCheckHand(2, this.GrimoireGetChange());
+				let bCanDouble    = (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])
 				//let spellResult1C = this.spellCheckHand(1, 1);
 				//let spellResult2C = this.spellCheckHand(2, 1);
 				//if (((spellResult1C == 'click frenzy') || (spellResult2C == 'click frenzy') || (spellResult1C == 'building special') || (spellResult2C == 'building special')) &&
@@ -1014,18 +1036,18 @@ let oEleCC = {
 				//}
 				let sMsg          = '';
 				if ((spellResult1 == 'building special') || (spellResult1 == 'frenzy')) {
-					if ((spellResult2 == 'click frenzy') && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])) {
+					if ((spellResult2 == 'click frenzy') && bCanDouble) {
 						this.Flags['AutoCast2'] = true;
 						this.Flags['AutoCastD'] = true;
 					} else {
 						this.Flags['AutoCast1'] = true;
-						this.Flags['AutoCastD'] = (spellResult2 == 'building special');
+						this.Flags['AutoCastD'] = (bCanDouble && (spellResult2 == 'building special'));
 					}
 				} else if ((spellResult1 == 'click frenzy') || (spellResult1 == 'elder frenzy')) {
 					this.Flags['AutoCast2'] = true;
-					this.Flags['AutoCastD'] = ((spellResult2 == 'building special') || (spellResult1 == 'frenzy') || (((spellResult2 == 'click frenzy') || (spellResult2 == 'elder frenzy')) && (spellResult1 != spellResult2)));
+					this.Flags['AutoCastD'] = (bCanDouble && ((spellResult2 == 'building special') || (spellResult2 == 'frenzy') || (((spellResult2 == 'click frenzy') || (spellResult2 == 'elder frenzy')) && (spellResult1 != spellResult2))));
 				} else {
-					this.CastSpell('hand of fate', false);
+					this.CastSpell(oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) < oGrimoire.getSpellCost(oGrimoire.spells['haggler\'s charm']) ? 'hand of fate' : 'haggler\'s charm', false);
 					sMsg = 'Hahaha...';
 				}
 				if (!sMsg) sMsg = 'Maybe I can cast <b>' + spellResult1 + (this.Flags['AutoCastD'] ? ' and ' + spellResult2 : '') + '</b>';
@@ -1062,12 +1084,39 @@ let oEleCC = {
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
+	// Auto-Trade
+	AutoTradeTimer: function() {
+		let oMarket = Game.Objects['Bank'].minigame;
+		if (oMarket) {
+			let sResult = '';
+			for (const loop1 in oMarket.goodsById) {
+				let oGoods = oMarket.goodsById[loop1];
+				if (oGoods.stock == 0)  {
+					if ((oMarket.getGoodPrice(oGoods) <= this.aTradeBaseAmount[loop1][0]) && (oMarket.goodDelta(loop1) >= 0)) {
+						oMarket.buyGood(loop1, oMarket.getGoodMaxStock(oGoods));
+						sResult = sResult + (sResult == '' ? '' : '<br>') + 'Auto-Trade buy '  + oGoods.symbol + '(' + Beautify(oMarket.getGoodPrice(oGoods), 2) + ')';
+					}
+				} else {
+					if ((oMarket.getGoodPrice(oGoods) >  this.aTradeBaseAmount[loop1][1]) && (oMarket.goodDelta(loop1) <  0)) {
+						oMarket.sellGood(loop1, oGoods.stock);
+						sResult = sResult + (sResult == '' ? '' : '<br>') + 'Auto-Trade sell ' + oGoods.symbol + '(' + Beautify(oMarket.getGoodPrice(oGoods), 2) + ')';
+					}
+				}
+			}
+			if (sResult != '') {
+				oMarket.toRedraw = 2;
+				this.Notify(sResult, false);
+			}
+		}
+	},
+	//--------------------------------------------------------------------------------------------------------------
 	// Test
 	EleCCTest: function() {
-		this.Notify(this.thinking + '<br>' + 
-			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
-			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
-			false);
+//		this.Notify(this.thinking + '<br>' + 
+//			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
+//			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
+//			false);
+		this.AutoTradeTimer();
 	}
 };
 oEleCC.Init();
