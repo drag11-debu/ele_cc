@@ -56,7 +56,7 @@ let oEleCC = {
 	// For Click Fortune
 	aClickFortuneHasCheck:   [
 		'Fortune #001','Fortune #002','Fortune #003','Fortune #004','Fortune #005','Fortune #006','Fortune #007','Fortune #008','Fortune #009','Fortune #010',
-		'Fortune #011','Fortune #012','Fortune #013','Fortune #014','Fortune #015','Fortune #016','Fortune #017',
+		'Fortune #011','Fortune #012','Fortune #013','Fortune #014','Fortune #015','Fortune #016','Fortune #017','Fortune #018',
 		'Fortune #100','Fortune #101','Fortune #102','Fortune #103','Fortune #104'
 	],
 	// Required Wizard tower amount
@@ -122,41 +122,37 @@ let oEleCC = {
 	nSugarDesire1:           0,
 	nSugarDesire2:           0,
 	sSugarExp:               '',
+	nSugarReRollCnt:         0,
 	// For Auto Trade
 	aTradeBaseAmount:        [
-		[  3,  30],
-		[  3,  40],
-		[  4,  50],
-		[  4,  50],
-		[ 10,  60],
-		[ 10,  60],
-		[ 10,  60],
-		[ 10,  60],
-		[ 40,  90],
-		[ 40,  90],
-		[ 40,  90],
-		[ 40,  90],
-		[ 40, 100],
-		[100, 120],
-		[ 40, 120],
-		[100, 160]
+		[  3, 100],
+		[  3, 100],
+		[  4, 100],
+		[  4, 100],
+		[ 10, 120],
+		[ 10, 120],
+		[ 10, 120],
+		[ 10, 120],
+		[ 30, 140],
+		[ 30, 140],
+		[ 30, 140],
+		[ 30, 140],
+		[ 30, 160],
+		[ 30, 160],
+		[ 30, 160],
+		[ 30, 160]
 	],
+	oTradeBkVal:  {},
+	oTradeBkVals: {},
+	oTradeBkD:    {},
+	oTradeBkMode: {},
+	oTradeBkDur:  {},
 	// log
 	aLog:                    [],
 	//--------------------------------------------------------------------------------------------------------------
 	// Functions
 	// Initialize
 	Init: function() {
-		// Hide topBar
-		document.getElementById('topBar').style.display = 'none';
-		document.getElementById('game').style.top       = 0;
-		// Block ADs
-		//document.getElementById('aqad').style.display = 'none';
-		// Change Cookies in bank font size
-		document.getElementById('cookies'          ).style.fontSize = '14pt';
-		// Change NewsTicker font size
-		document.getElementById('commentsText'     ).style.fontSize = '8pt';
-		document.getElementById('commentsTextBelow').style.fontSize = '8pt';
 		// Init timer
 		this.TimerStart('Init');
 	},
@@ -171,6 +167,20 @@ let oEleCC = {
 			this.TimerStart('SecTimer');
 			// Welcome message
 			this.Notify('Hello.', false);
+			// Hide topBar
+			document.getElementById('topBar').style.display = 'none';
+			document.getElementById('game').style.top       = 0;
+			// Block ADs
+			//document.getElementById('aqad').style.display = 'none';
+			// Change Cookies in bank font size
+			document.getElementById('cookies'          ).style.fontSize = '14pt';
+			// Change NewsTicker font size
+			document.getElementById('commentsText'     ).style.fontSize = '8pt';
+			document.getElementById('commentsTextBelow').style.fontSize = '8pt';
+			// Change Bank Balance span font size
+			if (Game.Objects['Bank'].minigame) {
+				document.getElementById('bankBalance'      ).style.fontSize = '10pt';
+			}
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -258,8 +268,9 @@ let oEleCC = {
 					case 4:  this.nSugarDesire1 = 3; break; // caramelized
 					default: this.nSugarDesire1 = 1;
 				}
-				this.nSugarDesire2 = this.nSugarDesire1 + Game.lumps;
-				this.sSugarExp     = this.WriteSave();
+				this.nSugarDesire2   = this.nSugarDesire1 + Game.lumps;
+				this.sSugarExp       = this.WriteSave();
+				this.nSugarReRollCnt = 0;
 				this.TimerStart('ReRollSugar');
 			}
 		}
@@ -674,6 +685,7 @@ let oEleCC = {
 			} else if (this.Timers['ReRollGarden'] > 0) {
 				this.TimerStop('ReRollGarden');
 				this.Notify('Garden ReRoll count: ' + this.nGardenReRollCnt, false);
+				this.AutoTradeRestore(this.nGardenReRollCnt > 0);
 				this.oGardenReRollSet = {};
 				this.sGardenReRollExp = '';
 				this.nGardenReRollCnt = 0;
@@ -711,11 +723,13 @@ let oEleCC = {
 		if (bResult) {
 			this.TimerStop('ReRollGarden');
 			this.Notify('Garden ReRoll count: ' + this.nGardenReRollCnt, false);
+			this.AutoTradeRestore(this.nGardenReRollCnt > 0);
 			this.oGardenReRollSet = {};
 			this.sGardenReRollExp = '';
 			this.nGardenReRollCnt = 0;
 		} else {
 			// ReRoll
+			if (this.nGardenReRollCnt == 0) this.AutoTradeBackup();
 			this.nGardenReRollCnt++;
 			Game.ImportSaveCode(this.sGardenReRollExp);
 		}
@@ -919,7 +933,10 @@ let oEleCC = {
 					} else {
 						bResult = (nCnt >= Math.ceil(nTotal / 2));
 					}
-					if (bResult) this.Notify((this.nGardenJuicerReRollCnt > 400 ? 'Hmmm...' : '') + 'Garden Juicer ReRoll count: ' + this.nGardenJuicerReRollCnt, false);
+					if (bResult) {
+						this.Notify((this.nGardenJuicerReRollCnt > 400 ? 'Hmmm...' : '') + 'Garden Juicer ReRoll count: ' + this.nGardenJuicerReRollCnt, false);
+						this.AutoTradeRestore(this.nGardenJuicerReRollCnt > 0);
+					}
 				}
 				if (bResult) {
 					this.oGardenJuicerSet       = {};
@@ -928,6 +945,7 @@ let oEleCC = {
 					this.nGardenNextStep        = oGarden.nextStep;
 				} else {
 					// ReRoll
+					if (this.nGardenJuicerReRollCnt == 0) this.AutoTradeBackup();
 					this.nGardenJuicerReRollCnt++;
 					Game.ImportSaveCode(this.sGardenJuicerExp);
 				}
@@ -935,6 +953,7 @@ let oEleCC = {
 			this.Timers['GardenJuicer'] = setTimeout(this.GardenJuicerTimer.bind(this), (bResult ? this.nGardenJuicerFreqMain : this.nGardenJuicerFreqReRoll));
 		} else {
 			this.Timers['GardenJuicer'] = 0;
+			this.AutoTradeRestore(false);
 			this.oGardenJuicerSet       = {};
 			this.sGardenJuicerExp       = '';
 			this.nGardenNextStep        = 0;
@@ -1074,12 +1093,16 @@ let oEleCC = {
 		if (this.nSugarDesire2 <= Game.lumps) {
 			// Rigidel restore
 			this.TimerStop('ReRollSugar');
-			this.Notify('I got ' + this.nSugarDesire1 + ' sugar' + (this.nSugarDesire1 > 1 ? 's' : '') + '!', false);
-			this.nSugarDesire1 = 0;
-			this.nSugarDesire2 = 0;
-			this.sSugarExp     = '';
+			this.Notify('I got ' + this.nSugarDesire1 + ' sugar' + (this.nSugarDesire1 > 1 ? 's' : '') + '! (ReRoll count: ' + this.nSugarReRollCnt + ')', false);
+			this.AutoTradeRestore(this.nSugarReRollCnt > 0);
+			this.nSugarDesire1   = 0;
+			this.nSugarDesire2   = 0;
+			this.sSugarExp       = '';
+			this.nSugarReRollCnt = 0;
 		} else {
 			// ReRoll
+			if (this.nSugarReRollCnt == 0) this.AutoTradeBackup();
+			this.nSugarReRollCnt++;
 			Game.ImportSaveCode(this.sSugarExp);
 		}
 	},
@@ -1090,17 +1113,44 @@ let oEleCC = {
 		if (oMarket) {
 			let sResult = '';
 			for (const loop1 in oMarket.goodsById) {
-				let oGoods = oMarket.goodsById[loop1];
-				if (oGoods.stock == 0)  {
-					if ((oMarket.getGoodPrice(oGoods) <= this.aTradeBaseAmount[loop1][0]) && (oMarket.goodDelta(loop1) >= 0)) {
+				let oGoods  = oMarket.goodsById[loop1];
+				let nAction = 0;   // 1: Buy, 2: Sell
+				let bType2  = (Array.isArray(oGoods.vals) && (oGoods.vals.length >= 4) && (oMarket.brokers > 60));
+//				if (Array.isArray(oGoods.vals) && oGoods.vals.length > 20) {
+//					let avg_all  = oGoods.vals.reduce((a, b) => a + b, 0) / oGoods.vals.length;
+//					let avg_near = oGoods.vals.slice(0,10).reduce((a, b) => a + b, 0) / oGoods.vals.slice(0, 10).length;
+//					if (avg_all < avg_near) {
+//						// Golden Cross?
+//						nAction = 1;
+//					} else {
+//						// Dead Cross?
+//						nAction = 2;
+//					}
+//				} else {
+					// first version
+					if (oGoods.stock == 0)  {
+						if ((oMarket.getGoodPrice(oGoods) <= this.aTradeBaseAmount[loop1][0]) && (oMarket.goodDelta(loop1) >= 0))
+							nAction = 1;
+						else if (bType2 && (oMarket.getGoodPrice(oGoods) < this.aTradeBaseAmount[loop1][1])) {
+							if ((oGoods.vals[0] > oGoods.vals[1]) && (oGoods.vals[1] > oGoods.vals[2]) && (oGoods.vals[2] > oGoods.vals[3])) nAction = 1;
+						}
+					} else {
+						if ((oMarket.getGoodPrice(oGoods) > this.aTradeBaseAmount[loop1][1]) && (oMarket.goodDelta(loop1) < 0))
+							nAction = 2;
+						else if (bType2 && (oMarket.getGoodPrice(oGoods) > this.aTradeBaseAmount[loop1][0])) {
+							if ((oGoods.vals[0] < oGoods.vals[1]) && (oGoods.vals[1] < oGoods.vals[2]) && (oGoods.vals[2] < oGoods.vals[3])) nAction = 2;
+						}
+					}
+//				}
+				switch (nAction) {
+					case 1:
 						oMarket.buyGood(loop1, oMarket.getGoodMaxStock(oGoods));
 						sResult = sResult + (sResult == '' ? '' : '<br>') + 'Auto-Trade buy '  + oGoods.symbol + '(' + Beautify(oMarket.getGoodPrice(oGoods), 2) + ')';
-					}
-				} else {
-					if ((oMarket.getGoodPrice(oGoods) >  this.aTradeBaseAmount[loop1][1]) && (oMarket.goodDelta(loop1) <  0)) {
+						break;
+					case 2:
 						oMarket.sellGood(loop1, oGoods.stock);
 						sResult = sResult + (sResult == '' ? '' : '<br>') + 'Auto-Trade sell ' + oGoods.symbol + '(' + Beautify(oMarket.getGoodPrice(oGoods), 2) + ')';
-					}
+						break;
 				}
 			}
 			if (sResult != '') {
@@ -1110,13 +1160,51 @@ let oEleCC = {
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
+	// Price histories Backup/Restore
+	AutoTradeBackup: function() {
+		this.oTradeBkVal  = {};
+		this.oTradeBkVals = {};
+		this.oTradeBkD    = {};
+		this.oTradeBkMode = {};
+		this.oTradeBkDur  = {};
+		let oMarket = Game.Objects['Bank'].minigame;
+		if (oMarket) {
+			for (const loop1 in oMarket.goodsById) {
+				let oGoods = oMarket.goodsById[loop1];
+				this.oTradeBkVal[loop1]  = oGoods.val;
+				this.oTradeBkVals[loop1] = [].concat(oGoods.vals);
+				this.oTradeBkD[loop1]    = oGoods.d;
+				this.oTradeBkMode[loop1] = oGoods.mode;
+				this.oTradeBkDur[loop1]  = oGoods.dur;
+			}
+		}
+	},
+	AutoTradeRestore: function(chk) {
+		let oMarket = Game.Objects['Bank'].minigame;
+		if (oMarket && this.oTradeBkVals && chk) {
+			for (const loop1 in oMarket.goodsById) {
+				let oGoods = oMarket.goodsById[loop1];
+				oGoods.val  = this.oTradeBkVal[loop1];
+				oGoods.vals = [].concat(this.oTradeBkVals[loop1]);
+				oGoods.d    = this.oTradeBkD[loop1];
+				oGoods.mode = this.oTradeBkMode[loop1];
+				oGoods.dur  = this.oTradeBkDur[loop1];
+			}
+			oMarket.toRedraw  = 2;
+		}
+		this.oTradeBkVal  = {};
+		this.oTradeBkVals = {};
+		this.oTradeBkD    = {};
+		this.oTradeBkMode = {};
+		this.oTradeBkDur  = {};
+	},
+	//--------------------------------------------------------------------------------------------------------------
 	// Test
 	EleCCTest: function() {
-//		this.Notify(this.thinking + '<br>' + 
-//			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
-//			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
-//			false);
-		this.AutoTradeTimer();
+		this.Notify(this.thinking + '<br>' + 
+			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
+			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
+			false);
 	}
 };
 oEleCC.Init();
