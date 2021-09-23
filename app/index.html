@@ -10,7 +10,7 @@
 	<meta http-equiv="X-UA-Compatible"         content="IE=edge">
 	<style>
 :root {
-	--webHeader-Height: 64px;
+	--webHeader-Height: 32px;
 }
 html {
 	width:  100%;
@@ -23,24 +23,27 @@ body {
 	overflow: hidden;
 }
 #webHeader {
+	box-sizing:       border-box;
 	display:          flex;
 	margin:           0;
 	padding:          2px;
 	width:            100%;
 	height:           var(--webHeader-Height);
-	font-size:        12pt;
+	font-size:        small;
+	white-space:      nowrap;
+	color:            white;
 	background-color: #5f5f5f;
 	line-height:      2em;
 	overflow:         hidden;
 	user-select:      none;
 }
 #webHeader #webHeaderA {
-	width:            calc(100% - 32px);
+	width:            calc(100% - 150px);
 }
 #webHeader #webHeaderB {
 	display:          table;
 	margin-left:      auto;
-	width:            32px;
+	width:            150px;
 	height:           100%;
 }
 #webHeader #webHeaderB input {
@@ -61,81 +64,108 @@ body {
 #webHeader #webHeaderB input:checked + label span:after{
 	content:          "▼";
 }
-#webHeader .nowrapGroup {
+.nowrapGroup {
 	white-space:      nowrap;
 }
-#webHeader button {
+button {
 	font-family:      inherit;
 	white-space:      nowrap;
 	height:           2em;
 	border-radius:    6px;
 }
-#webHeader button:hover    { opacity: 0.7; }
-#webHeader button:disabled { opacity: 0.7; }
-#webHeader label{
-	white-space:      nowrap;
-	color:            white;
+button:hover    { opacity: 0.7; }
+button:disabled { opacity: 0.7; }
+#webMain {
+	display:          flex;
+	width:            100%;
+	height:           calc(100% - var(--webHeader-Height));
+	background-color: #5f5f5f;
 }
 #webWrap {
-	position: absolute;
-	top:      var(--webHeader-Height);
-	bottom:   0;
-	margin:   0;
-	padding:  0;
-	width:    100%;
+	width:    calc(100% - 150px);
+	height:   100%;
 	overflow: hidden;
+}
+#webSide {
+	box-sizing:  border-box;
+	width:       150px;
+	height:      calc(100% - 8px);
+	padding:     2px;
+	font-size:   small;
+	line-height: 1.5em;
+	white-space: nowrap;
+	color:       white;
+	overflow-x:  hidden;
+	overflow-y:  scroll;
+	user-select: none;
 }
 	</style>
 </head>
 <body>
 	<div id="webHeader">
 		<div id="webHeaderA">
-			<span class="nowrapGroup"><input  type="checkbox" id="click_cookie"   class="check_box send_onoff" data-event="CLICK_COOKIE"   /><label class="check_box_label" for="click_cookie">BigCookie</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_golden"   class="check_box send_onoff" data-event="CLICK_GOLDEN"   /><label class="check_box_label" for="click_golden">Golden</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="buy_auto_a"     class="check_box send_onoff" data-event="BUY_A"          /><label class="check_box_label" for="buy_auto_a">PlanA</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_switch"   class="check_box send_onoff" data-event="CLICK_SWITCH"   /><label class="check_box_label" for="click_switch">GSwitch</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_cast"     class="check_box send_onoff" data-event="CLICK_CAST"     /><label class="check_box_label" for="click_cast">Cast</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="sell_godzamok"  class="check_box send_onoff" data-event="SELL_GODZAMOK"  /><label class="check_box_label" for="sell_godzamok">Godzamok</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="buy_auto_z"     class="check_box send_onoff" data-event="BUY_Z"          /><label class="check_box_label" for="buy_auto_z">PlanZ</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="buy_ep"         class="check_box send_onoff" data-event="BUY_EP"         /><label class="check_box_label" for="buy_ep">EP</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_sugar"    class="check_box send_onoff" data-event="CLICK_SUGAR"    /><label class="check_box_label" for="click_sugar">Sugar</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_fortune"  class="check_box send_onoff" data-event="CLICK_FORTUNE"  /><label class="check_box_label" for="click_fortune">Fortune</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_dragon"   class="check_box send_onoff" data-event="CLICK_DRAGON"   /><label class="check_box_label" for="click_dragon">Dragon</label></span>
-			<span class="nowrapGroup"><input  type="checkbox" id="click_wrinkler" class="check_box send_onoff" data-event="CLICK_WRINKLER" /><label class="check_box_label" for="click_wrinkler">Wrinkler</label></span>
-			<span class="nowrapGroup">
-				<input  type="checkbox" id="auto_juicer"     class="check_box"            data-event="AUTO_JUICER"    /><label class="check_box_label" for="auto_juicer">Auto</label>
-				<input  type="checkbox" id="click_gardener"  class="check_box send_onoff" data-event="CLICK_GARDENER" /><label class="check_box_label" for="click_gardener">Gardener</label>
-				<select id="click_juicer_target" data-event="GARDEN_JUICER_TARGET">
-					<option value="">----------</option>
-					<option value="queenbeetLump">Juicy</option>
-					<option value="everdaisy">EverDaisy</option>
-					<option value="drowsyfern">Drowsyfern</option>
-					<option value="duketater">Duketater</option>
-					<option value="J_E_D_D" selected>J|E|D|D</option>
-					<option value="elderwort">Elderwort</option>
-					<option value="cronerice">Cronerice</option>
-					<option value="queenbeet">Queenbeet</option>
-				</select>
-				<input  type="checkbox" id="click_juicer"    class="check_box send_onoff" data-event="GARDEN_JUICER"  /><label class="check_box_label" for="click_juicer">Juicer</label>
-				<button type="button"   id="reroll_garden"   class="send_savedata" data-event="REROLL_GARDEN" />ReRoll</button>
-				<button type="button"   id="reroll_g_once"   class="send_savedata" data-event="REROLL_G_ONCE" />RRD</button>
-			</span>
-			<span class="nowrapGroup"><input  type="checkbox" id="auto_trade"     class="check_box send_onoff" data-event="AUTO_TRADE"     /><label class="check_box_label" for="auto_trade">Trade</label></span>
 			<span class="nowrapGroup"><input  type="checkbox" id="auto_backup"    class="check_box send_onoff" data-event="AUTO_BACKUP"    /><label class="check_box_label" for="auto_backup">Backup+Log</label></span>
 			<span class="nowrapGroup">
-				<button type="button"   id="quick_export"    class="send_only"     data-event="QUICK_EXPORT" />QExp</button>
-				<button type="button"   id="quick_import"    class="send_savedata" data-event="QUICK_IMPORT" />QImp</button>
-				<button type="button"   id="quick_clear"     />QClear</button>
+				<button type="button"   id="quick_export"    class="send_only"     data-event="QUICK_EXPORT" >QExp</button>
+				<button type="button"   id="quick_import"    class="send_savedata" data-event="QUICK_IMPORT" >QImp</button>
+				<button type="button"   id="quick_clear"     >QClear</button>
 				<input  type="text"     id="quick_data"      style="width: 5em;"></input>
 			</span>
-			<button type="button"   id="win_devtool"   class="send_only"     data-event="WIN_DEVTOOL" />Dev</button>
-			<button type="button"   id="test"          class="send_only"     data-event="TEST"        />Test</button>
+			<button type="button"   id="win_devtool"   class="send_only"     data-event="WIN_DEVTOOL" >Dev</button>
+			<button type="button"   id="test"          class="send_only"     data-event="TEST"        >Test</button>
+			<a href="https://messieurs.github.io/fthofplannerv2/" target="_blank">Planner</a>
 		</div>
 		<div id="webHeaderB">
 			<input  type="checkbox" id="win_shrink"    class="check_box send_onoff" data-event="WIN_SHRINK" /><label class="check_box_label webHeaderB" for="win_shrink"><span></span></label>
 		</div>
 	</div>
-	<div id="webWrap"></div>
+	<div id="webMain">
+		<div id="webWrap"></div>
+		<div id="webSide">
+			AutoClick...
+			<div class="nowrapGroup"><input  type="checkbox" id="click_cookie"   class="check_box send_onoff" data-event="CLICK_COOKIE"   /><label class="check_box_label" for="click_cookie">BigCookie</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="click_golden"   class="check_box send_onoff" data-event="CLICK_GOLDEN"   /><label class="check_box_label" for="click_golden">GoldenCookie</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="buy_ep"         class="check_box send_onoff" data-event="BUY_EP"         /><label class="check_box_label" for="buy_ep">ElderPledge</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="click_sugar"    class="check_box send_onoff" data-event="CLICK_SUGAR"    /><label class="check_box_label" for="click_sugar">Sugar</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="click_fortune"  class="check_box send_onoff" data-event="CLICK_FORTUNE"  /><label class="check_box_label" for="click_fortune">Fortune</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="click_dragon"   class="check_box send_onoff" data-event="CLICK_DRAGON"   /><label class="check_box_label" for="click_dragon">Dragon</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="click_wrinkler" class="check_box send_onoff" data-event="CLICK_WRINKLER" /><label class="check_box_label" for="click_wrinkler">Wrinkler</label></div>
+			<hr />
+			GodzamokPlan...
+			<div class="nowrapGroup"><input  type="checkbox" id="click_switch"   class="check_box send_onoff" data-event="CLICK_SWITCH"   /><label class="check_box_label" for="click_switch">GoldenSwitch</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_cast"     class="check_box send_onoff" data-event="CLICK_CAST"     /><label class="check_box_label" for="click_cast">Cast</label></div>
+			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_loan"      class="check_box send_onoff" data-event="AUTO_LOAN"      /><label class="check_box_label" for="auto_loan">Loan2</label></div>
+			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_sugar"     class="check_box send_onoff" data-event="AUTO_SUGAR"     /><label class="check_box_label" for="auto_sugar">SugarFrenzy</label></div>
+			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_charge"    class="check_box send_onoff" data-event="AUTO_CHARGE"    /><label class="check_box_label" for="auto_charge">SugarCharge</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="sell_godzamok"  class="check_box send_onoff" data-event="SELL_GODZAMOK"  /><label class="check_box_label" for="sell_godzamok">Godzamok</label></div>
+			<hr />
+			AutoBuy...
+			<div class="nowrapGroup">&emsp;<select id="auto_buy_select" data-event="GARDEN_JUICER_TARGET">
+				<option value="">----------</option>
+				<option value="BUY_A">Plan A</option>
+				<option value="BUY_Z">Plan Z</option>
+			</select></div>
+			<hr />
+			<div class="nowrapGroup"><input  type="checkbox" id="auto_juicer"     class="check_box"            data-event="AUTO_JUICER"    /><label class="check_box_label" for="auto_juicer">AutoJuicer</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_gardener"  class="check_box send_onoff" data-event="CLICK_GARDENER" /><label class="check_box_label" for="click_gardener">Gardener</label></div>
+			&emsp;<select id="click_juicer_target" data-event="GARDEN_JUICER_TARGET">
+				<option value="">----------</option>
+				<option value="queenbeetLump">Juicy</option>
+				<option value="everdaisy">EverDaisy</option>
+				<option value="drowsyfern">Drowsyfern</option>
+				<option value="duketater">Duketater</option>
+				<option value="J_E_D_D" selected>J|E|D|D</option>
+				<option value="elderwort">Elderwort</option>
+				<option value="cronerice">Cronerice</option>
+				<option value="queenbeet">Queenbeet</option>
+			</select>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_juicer"    class="check_box send_onoff" data-event="GARDEN_JUICER"  /><label class="check_box_label" for="click_juicer">Juicer</label></div>
+			<div class="nowrapGroup">&emsp;<button type="button"   id="reroll_garden"   class="send_savedata" data-event="REROLL_GARDEN" />ReRoll</button></div>
+			<div class="nowrapGroup">&emsp;<button type="button"   id="reroll_g_once"   class="send_savedata" data-event="REROLL_G_ONCE" />RROnce</button></div>
+			<hr />
+			<div class="nowrapGroup"><input  type="checkbox" id="auto_trade"     class="check_box send_onoff" data-event="AUTO_TRADE"     /><label class="check_box_label" for="auto_trade">AutoTrade</label></div>
+		</div>
+	</div>
 	<script type="text/javascript">
 // Send on
 document.querySelectorAll('.send_onoff').forEach(function(target) {
@@ -163,9 +193,15 @@ document.getElementById('auto_juicer').addEventListener('change', function() {
 	document.getElementById('click_juicer').disabled        = this.checked;
 	document.getElementById('click_juicer_target').disabled = this.checked;
 	document.getElementById('reroll_garden').disabled       = this.checked;
+	document.getElementById('reroll_g_once').disabled       = this.checked;
 	window.elect.IpcRendererSend(this.dataset.event, this.checked);
 });
 document.getElementById('click_juicer_target').addEventListener('change', function() { window.elect.IpcRendererSend(this.dataset.event, this.value); });
+document.getElementById('auto_buy_select').addEventListener('change', function() {
+	for (const elem of ['BUY_A', 'BUY_Z']) {
+		window.elect.IpcRendererSend(elem, (this.value == elem));
+	}
+});
 document.getElementById('quick_export'       ).addEventListener('click',  function() { window.elect.IpcRendererSend(this.dataset.event, ''); });
 document.getElementById('quick_clear'        ).addEventListener('click',  function() { document.getElementById('quick_data').value = ''; });
 // Receive on

@@ -1,5 +1,5 @@
 'use strict';
-const { app, BrowserView, BrowserWindow, ipcMain, session } = require('electron');
+const { app, BrowserView, BrowserWindow, ipcMain, session, shell } = require('electron');
 const path = require('path');
 const fs   = require('fs');
 let win;
@@ -39,6 +39,8 @@ let MinTimer = () => {
 	nMinTimerCnt = (nMinTimerCnt + 1) % 60;
 }
 
+//app.disableHardwareAcceleration();
+
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
@@ -55,10 +57,11 @@ app.on('ready', () => {
 
 	// Open Window
 	const lngWidth      = 1000;
+	const lngSideWidth  = 150;
 	const lngHeight     = 600;
-	const lngHeadHeight = 64 + 2;
+	const lngHeadHeight = 32 + 2;
 	win = new BrowserWindow({
-		width:	            lngWidth,
+		width:	            lngWidth + lngSideWidth,
 		height:	            lngHeight,
 		title:              'Electronical Cookie Creator',
 		useContentSize:     true,
@@ -73,6 +76,7 @@ app.on('ready', () => {
 	});
 	win.loadURL('file://' + __dirname + '/index.html');
 	win.webContents.on('new-window', (ev,url) => {
+		ev.preventDefault();
 		shell.openExternal(url);
 	});
 
@@ -96,8 +100,17 @@ app.on('ready', () => {
 	});
 	view.webContents.loadURL('https://orteil.dashnet.org/cookieclicker/');
 	view.webContents.on('did-finish-load', () => {
-		const js = fs.readFileSync(path.join(__dirname, 'ele_cc.js')).toString();
-		view.webContents.executeJavaScript(js);
+		view.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname, 'ele_cc.js')).toString());
+		// Change Cookies in bank font size
+		// Hide topBar
+		view.webContents.insertCSS('#cookies           { font-size: 12pt !important; } ' + 
+		                           '#commentsText      { font-size:  8pt; } ' + 
+		                           '#commentsTextBelow { font-size:  8pt; } ' + 
+		                           '#bankBalance       { font-size: 10pt; } ' + 
+		                           '#topBar            { display: none; } ' + 
+		                           '#game              { top:     0 !important; } ');
+		// Block ADs
+		//view.webContents.insertCSS('#aqad              { display: none; }');
 	});
 
 	// shortcut
@@ -121,7 +134,7 @@ app.on('ready', () => {
 			view.setBounds({
 				x:	0,
 				y:	lngHeadHeight,
-				width:	winsize[0],
+				width:	winsize[0] - lngSideWidth,
 				height:	winsize[1] - lngHeadHeight
 			});
 		}, 10);
@@ -140,6 +153,9 @@ app.on('ready', () => {
 	ipcMain.handle('CLICK_CAST',        (event, onoff) => {
 		view.webContents.executeJavaScript(onoff ? "oEleCC.AutoCastStart();" : "oEleCC.AutoCastStop();");
 	});
+	ipcMain.handle('AUTO_LOAN',         (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoLoan']     = " + onoff + ";"); });
+	ipcMain.handle('AUTO_SUGAR',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoSugar']    = " + onoff + ";"); });
+	ipcMain.handle('AUTO_CHARGE',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoCharge']   = " + onoff + ";"); });
 	ipcMain.handle('BUY_EP',            (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = " + onoff + ";"); });
 	ipcMain.handle('BUY_A',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyA']     = " + onoff + ";"); });
 	ipcMain.handle('BUY_Z',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = " + onoff + ";"); });
@@ -174,7 +190,7 @@ app.on('ready', () => {
 		if (onoff) {
 			let aSize = win.getSize();
 			nHeightBak = aSize[1];
-			win.setSize(aSize[0], process.platform == 'linux' ? 120 : 160, false);
+			win.setSize(aSize[0], process.platform == 'linux' ? 90 : 130, false);
 		} else if (nHeightBak > 0) {
 			let aSize = win.getSize();
 			win.setSize(aSize[0], nHeightBak, false);

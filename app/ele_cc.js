@@ -26,7 +26,9 @@ let oEleCC = {
 		'AutoCastT':    false,
 		'AutoCast1':    false,
 		'AutoCast2':    false,
-		'AutoCastD':    false,
+		'AutoLoan':     false,
+		'AutoSugar':    false,
+		'AutoCharge':   false,
 		'AutoBuyA':     false,
 		'AutoBuyZ':     false,
 		'SellGodzamok': false,
@@ -37,6 +39,9 @@ let oEleCC = {
 	},
 	// 1Sec Timer couunt
 	nSecCount:               0,
+	// Cast chain
+	sCastChainName:          [],
+	nCastChainSeason:        [],
 	// Garden Setting
 	oGardenerSetting:        {},
 	oGardenReRollSet:        {},
@@ -48,8 +53,10 @@ let oEleCC = {
 	nSellGodzamokCnt:        0,
 	oSellGodzamokAmount:     {},
 	nSellGodzamokBeforeAmt:  0,
+	nSellGodzamokBeforeClicks: 0,
 	// Excluded: Has Minigame, Has Synergy effect to Fractal/Javascript/Idleverse
-	aSellGodzamokTarget:     ['Mine', 'Factory', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser'],
+//	aSellGodzamokTarget:     ['Mine', 'Factory', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser'],
+	aSellGodzamokTarget:     ['Mine', 'Factory'],
 	nSellGodzamokFreq:       5,
 	// For Click Dragon
 	aClickDragonHasCheck:    ['Dragon scale', 'Dragon claw', 'Dragon fang', 'Dragon teddy bear'],
@@ -104,7 +111,7 @@ let oEleCC = {
 	nBuyZTarget1Rate:        1.2,
 	aBuyZTarget2:            ['Cursor', 'Grandma', 'Portal', 'Prism', 'Javascript console'],
 	nBuyZTarget2Rate:        1.5,
-	aBuyZTarget3:            ['Farm', 'Bank', 'Temple', 'Chancemaker'],
+	aBuyZTarget3:            ['Farm', 'Bank', 'Temple', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser', 'Chancemaker'],
 	nBuyZTarget3Rate:        3,
 	// For Garden Juicer
 	nGardenJuicerFreqMain:   1000 * 5,
@@ -142,11 +149,11 @@ let oEleCC = {
 		[ 30, 160],
 		[ 30, 160]
 	],
-	oTradeBkVal:  {},
-	oTradeBkVals: {},
-	oTradeBkD:    {},
-	oTradeBkMode: {},
-	oTradeBkDur:  {},
+	oTradeBkVal:             {},
+	oTradeBkVals:            {},
+	oTradeBkD:               {},
+	oTradeBkMode:            {},
+	oTradeBkDur:             {},
 	// log
 	aLog:                    [],
 	//--------------------------------------------------------------------------------------------------------------
@@ -167,20 +174,6 @@ let oEleCC = {
 			this.TimerStart('SecTimer');
 			// Welcome message
 			this.Notify('Hello.', false);
-			// Hide topBar
-			document.getElementById('topBar').style.display = 'none';
-			document.getElementById('game').style.top       = 0;
-			// Block ADs
-			//document.getElementById('aqad').style.display = 'none';
-			// Change Cookies in bank font size
-			document.getElementById('cookies'          ).style.fontSize = '14pt';
-			// Change NewsTicker font size
-			document.getElementById('commentsText'     ).style.fontSize = '8pt';
-			document.getElementById('commentsTextBelow').style.fontSize = '8pt';
-			// Change Bank Balance span font size
-			if (Game.Objects['Bank'].minigame) {
-				document.getElementById('bankBalance'      ).style.fontSize = '10pt';
-			}
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -220,6 +213,9 @@ let oEleCC = {
 	// Log,popup,notify
 	Notify: function(message, persist) {
 		Game.Notify('Ele-CC ' + (persist ? 'report' : 'info'), message, 0, (persist ? 0 : 7));
+		this.SetLog(message);
+	},
+	SetLog: function(message) {
 		let dt    = new Date();
 		let sTime =
 			 dt.getFullYear()                               + '/' +
@@ -297,9 +293,8 @@ let oEleCC = {
 					}
 					// Auto Cast spell(1)
 					if (this.Flags['AutoCast1'] && (!Game.hasBuff('Clot'))) {
-						if (this.CastSpell('hand of fate', this.Flags['AutoCastD'])) {
+						if (this.CastSpell('hand of fate', (this.sCastChainName.length > 1))) {
 							this.Flags['AutoCast1'] = false;
-							this.Flags['AutoCastD'] = false;
 							this.Notify('Bibbidi-bobbidi...poo...', false);
 						}
 					}
@@ -329,22 +324,80 @@ let oEleCC = {
 	CastSpell: function(name, double) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells[name]))) {
-			oGrimoire.castSpell(oGrimoire.spells[name]);
+			// Change Season(Run twice!)
+			if (this.nCastChainSeason.length > 0) {
+				if ((this.GrimoireGetChange() != this.nCastChainSeason[0]) && Game.Upgrades['Lovesick biscuit'].canBuy()) {
+					Game.Upgrades['Lovesick biscuit'].buy();
+					this.SetLog('Lovesick biscuit clicked.');
+				}
+				if ((this.GrimoireGetChange() != this.nCastChainSeason[0]) && Game.Upgrades['Lovesick biscuit'].canBuy()) {
+					Game.Upgrades['Lovesick biscuit'].buy();
+					this.SetLog('Lovesick biscuit clicked.');
+				}
+			}
 			let nLevel = Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9);
-			if (double && (oGrimoire.magic >= this.aDoubleCastMP[nLevel][0])) {
+			oGrimoire.castSpell(oGrimoire.spells[name]);
+			this.SetLog('(1)' + name);
+//			if (double && (oGrimoire.magic >= this.aDoubleCastMP[nLevel][0])) {
+			if (double && this.nCastChainSeason.length > 1) {
 				let nSell = Game.Objects['Wizard tower'].amount - this.aDoubleCastMP[nLevel][1];
 				Game.Objects['Wizard tower'].sell(nSell, 1);
-				setTimeout(this.CastDouble, 700, name, nSell);
+				setTimeout(this.CastSpellMain.bind(this), 500, name, nSell, 2, this.nCastChainSeason.length);
+				if (this.Flags['AutoLoan'] && (!Game.hasBuff('Loan 2')) && (!Game.hasBuff('Loan 2 (interest)'))) {
+					let oBank  = Game.Objects['Bank'].minigame;
+					if ((oBank) && (oBank.officeLevel > 3)) {
+						oBank.takeLoan(2);
+						this.SetLog('Auto-Loan2 clicked.');
+					}
+				}
+				if (this.Flags['AutoSugar'] && (Game.Upgrades['Sugar frenzy'])) {
+					if ((Game.Upgrades['Sugar frenzy'].canBuy()) && (!Game.Upgrades['Sugar frenzy'].bought)) {
+						Game.Upgrades['Sugar frenzy'].buy();
+						this.SetLog('Auto-SugarFrenzy clicked.');
+					}
+				}
 			}
 			return true;
 		} else
 			return false;
 	},
-	CastDouble: function(name, buy) {
+	CastSpellMain: function(name, buy, num, cnt) {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
+			// Change Season(once)
+			if ((this.GrimoireGetChange() != this.nCastChainSeason[0]) && Game.Upgrades['Lovesick biscuit'].canBuy()) {
+				Game.Upgrades['Lovesick biscuit'].buy();
+				this.SetLog('Lovesick biscuit clicked.');
+			}
+			// Cast
 			oGrimoire.castSpell(oGrimoire.spells[name]);
-			Game.Objects['Wizard tower'].buy(buy);
+			this.SetLog('(' + num + ')' + name);
+			// Buy/Sell Wizard tower
+			switch (num) {
+				case 1:
+				case 3:
+					if (cnt > num) Game.Objects['Wizard tower'].sell(buy, 1);
+					break;
+				case 2:
+				case 4:
+					Game.Objects['Wizard tower'].buy(buy);
+					if (cnt > num)  {
+						if (this.Flags['AutoCharge'] && Game.canRefillLump()) {
+							oGrimoire.lumpRefill.click()
+							this.SetLog('Auto-Charge clicked.');
+						} else {
+							cnt = num;
+						}
+					}
+					break;
+			}
+			// Next spell
+			if (num < cnt) {
+				setTimeout(this.CastSpellMain.bind(this), 500, name, buy, num + 1, cnt);
+			} else {
+				this.sCastChainName.splice(0);
+				this.nCastChainSeason.splice(0);
+			}
 		}
 	},
 	//--------------------------------------------------------------------------------------------------------------
@@ -352,9 +405,10 @@ let oEleCC = {
 	SellGodzamok: function() {
 		let oPantheon = Game.Objects['Temple'].minigame;
 		if (oPantheon && Game.hasGod('ruin') && (!Game.hasBuff('Clot')) && (this.Timers['SellGodzamok'] == 0)) {
-			this.nSellGodzamokBeforeAmt = Game.cookies;
-			this.nSellGodzamokCnt       = 0;
-			this.oSellGodzamokAmount    = {};
+			this.nSellGodzamokCnt          = 0;
+			this.nSellGodzamokBeforeAmt    = Game.cookies;
+			this.nSellGodzamokBeforeClicks = Game.cookieClicks;
+			this.oSellGodzamokAmount      = {};
 			for (const loop1 of this.aSellGodzamokTarget) {
 				this.oSellGodzamokAmount[loop1] = Game.Objects[loop1].amount - ((loop1 == 'Farm') || (loop1 == 'Bank') ? 301 : 1);
 			}
@@ -369,7 +423,11 @@ let oEleCC = {
 		if (this.nSellGodzamokCnt % 2 == 1) {
 			if ((this.GetBuffTime('Dragonflight') <= 10) && (this.GetBuffTime('Click frenzy') <= 10) && (this.GetBuffTime('Elder frenzy') <= 10)) {
 				this.TimerStop('SellGodzamok');
-				this.Notify('<b>Sell Godzamok</b> was done.<b>' + ((this.nSellGodzamokCnt + 1) / 2) + '</b> count' + (this.nSellGodzamokCnt > 1 ? 's' : '') + '!<br>' + Beautify(this.nSellGodzamokBeforeAmt) + '<br>' + Beautify(Game.cookies), true);
+				this.Notify('<b>Sell Godzamok</b> was done.<br>' + 
+					'<b>' + ((this.nSellGodzamokCnt + 1) / 2) + '</b> count' + (this.nSellGodzamokCnt > 1 ? 's' : '') + '!<br>' +
+					'<b>' + (Game.cookieClicks - this.nSellGodzamokBeforeClicks) + '</b> clicks!<br>' +
+					Beautify(this.nSellGodzamokBeforeAmt) + '<br>' + 
+					Beautify(Game.cookies), true);
 				this.oSellGodzamokAmount = {};
 				if (this.Flags['AutoBuyZ']) this.TimerStart('AutoBuyZ');
 			} else {
@@ -1026,50 +1084,83 @@ let oEleCC = {
 	AutoCastStart: function() {
 		this.Flags['AutoCast1'] = false;
 		this.Flags['AutoCast2'] = false;
-		this.Flags['AutoCastD'] = false;
 		this.Flags['AutoCastT'] = true;
+		this.sCastChainName.splice(0);
+		this.nCastChainSeason.splice(0);
 	},
 	AutoCastStop: function() {
 		this.Flags['AutoCast1'] = false;
 		this.Flags['AutoCast2'] = false;
-		this.Flags['AutoCastD'] = false;
 		this.Flags['AutoCastT'] = false;
+		this.sCastChainName.splice(0);
+		this.nCastChainSeason.splice(0);
 	},
 	// Auto Cast Check -> Auto Cast spell(2)
 	ClickSpellCheckTimer: function() {
 		let oGrimoire  = Game.Objects['Wizard tower'].minigame;
 		if (oGrimoire) {
 			if ((!this.Flags['AutoCast1']) && (!this.Flags['AutoCast2']) && (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate'])) && (oGrimoire.magic == oGrimoire.magicM)) {
-				let spellResult1  = this.spellCheckHand(1, this.GrimoireGetChange());
-				let spellResult2  = this.spellCheckHand(2, this.GrimoireGetChange());
-				let bCanDouble    = (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])
-				//let spellResult1C = this.spellCheckHand(1, 1);
-				//let spellResult2C = this.spellCheckHand(2, 1);
-				//if (((spellResult1C == 'click frenzy') || (spellResult2C == 'click frenzy') || (spellResult1C == 'building special') || (spellResult2C == 'building special')) &&
-				//     (spellResult1  != 'click frenzy') && (spellResult2  != 'click frenzy') && (spellResult1C != 'building special') && (spellResult2C == 'building special')) {
-				//	spellResult1 = spellResult1C;
-				//	spellResult2 = spellResult2C;
-				//	if (Game.chimeType == 0) Game.chimeType = 1;
-				//} else if (Game.chimeType == 1) {
-				//	Game.chimeType = 0;
-				//}
-				let sMsg          = '';
-				if ((spellResult1 == 'building special') || (spellResult1 == 'frenzy')) {
-					if ((spellResult2 == 'click frenzy') && bCanDouble) {
-						this.Flags['AutoCast2'] = true;
-						this.Flags['AutoCastD'] = true;
-					} else {
-						this.Flags['AutoCast1'] = true;
-						this.Flags['AutoCastD'] = (bCanDouble && (spellResult2 == 'building special'));
+				// Version 2(Cast chain)
+				let spellCheck0;
+				let spellCheck1;
+				let sSpellChainArrowF = ['building special', 'click frenzy', 'elder frenzy'];
+				let sSpellChainArrowN = ['building special', 'click frenzy', 'elder frenzy', 'frenzy'];
+				let sMsg = '';
+				this.sCastChainName.splice(0);
+				this.nCastChainSeason.splice(0);
+				spellCheck0  = this.spellCheckHand(1, 0);
+				spellCheck1  = this.spellCheckHand(1, 1);
+				if ((sSpellChainArrowF.includes(spellCheck0)) && (spellCheck1 != 'building special')) {
+					this.sCastChainName.push(spellCheck0);
+					this.nCastChainSeason.push(0);
+				} else if (sSpellChainArrowF.includes(spellCheck1)) {
+					this.sCastChainName.push(spellCheck1);
+					this.nCastChainSeason.push(1);
+				}
+				if (this.sCastChainName.length > 0) {
+					for(let loop1 = 2; loop1 <= (this.Flags['AutoCharge'] ? 4 : 2); loop1++) {
+						spellCheck0  = this.spellCheckHand(loop1, 0);
+						spellCheck1  = this.spellCheckHand(loop1, 1);
+						if ((sSpellChainArrowF.includes(spellCheck0)) && (spellCheck1 != 'building special')) {
+							this.sCastChainName.push(spellCheck0);
+							this.nCastChainSeason.push(0);
+						} else if (sSpellChainArrowN.includes(spellCheck1)) {
+							this.sCastChainName.push(spellCheck1);
+							this.nCastChainSeason.push(1);
+						} else {
+							break;
+						}
 					}
-				} else if ((spellResult1 == 'click frenzy') || (spellResult1 == 'elder frenzy')) {
-					this.Flags['AutoCast2'] = true;
-					this.Flags['AutoCastD'] = (bCanDouble && ((spellResult2 == 'building special') || (spellResult2 == 'frenzy') || (((spellResult2 == 'click frenzy') || (spellResult2 == 'elder frenzy')) && (spellResult1 != spellResult2))));
-				} else {
+				}
+				if (this.sCastChainName.length < 1) {
 					this.CastSpell(oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) < oGrimoire.getSpellCost(oGrimoire.spells['haggler\'s charm']) ? 'hand of fate' : 'haggler\'s charm', false);
 					sMsg = 'Hahaha...';
+				} else if ((this.sCastChainName.includes('click frenzy')) || (this.sCastChainName.includes('elder frenzy'))) {
+						this.Flags['AutoCast2'] = true;
+				} else {
+						this.Flags['AutoCast1'] = true;
 				}
-				if (!sMsg) sMsg = 'Maybe I can cast <b>' + spellResult1 + (this.Flags['AutoCastD'] ? ' and ' + spellResult2 : '') + '</b>';
+				if (!sMsg) sMsg = 'Maybe I can cast <b>' + JSON.stringify(this.sCastChainName) + '</b>';
+//				// Version 1(Double cast)
+//				let spellResult1  = this.spellCheckHand(1, this.GrimoireGetChange());
+//				let spellResult2  = this.spellCheckHand(2, this.GrimoireGetChange());
+//				let bCanDouble    = (oGrimoire.magic > oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) + this.aDoubleCastMP[Math.min(Math.floor(Game.Objects['Wizard tower'].level) - 1, 9)][0])
+//				let sMsg          = '';
+//				if ((spellResult1 == 'building special') || (spellResult1 == 'frenzy')) {
+//					if ((spellResult2 == 'click frenzy') && bCanDouble) {
+//						this.Flags['AutoCast2'] = true;
+//						this.Flags['AutoCastD'] = true;
+//					} else {
+//						this.Flags['AutoCast1'] = true;
+//						this.Flags['AutoCastD'] = (bCanDouble && (spellResult2 == 'building special'));
+//					}
+//				} else if ((spellResult1 == 'click frenzy') || (spellResult1 == 'elder frenzy')) {
+//					this.Flags['AutoCast2'] = true;
+//					this.Flags['AutoCastD'] = (bCanDouble && ((spellResult2 == 'building special') || (spellResult2 == 'frenzy') || (((spellResult2 == 'click frenzy') || (spellResult2 == 'elder frenzy')) && (spellResult1 != spellResult2))));
+//				} else {
+//					this.CastSpell(oGrimoire.getSpellCost(oGrimoire.spells['hand of fate']) < oGrimoire.getSpellCost(oGrimoire.spells['haggler\'s charm']) ? 'hand of fate' : 'haggler\'s charm', false);
+//					sMsg = 'Hahaha...';
+//				}
 				this.Notify(sMsg, false);
 			}
 			// Auto Cast spell(2)
@@ -1077,9 +1168,8 @@ let oEleCC = {
 				if (this.AnyHasBuff(this.aAutoCastTarget) && 
 				    (!this.AnyHasBuff(['Clot', 'Dragonflight', 'Click frenzy', 'Elder frenzy'])) &&
 				    (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0)) {
-					if (this.CastSpell('hand of fate', this.Flags['AutoCastD'])) {
+					if (this.CastSpell('hand of fate', (this.sCastChainName.length > 1))) {
 						this.Flags['AutoCast2'] = false;
-						this.Flags['AutoCastD'] = false;
 						this.Notify('Bibbidi-bobbidi...baa...', false);
 					}
 				}
@@ -1201,10 +1291,24 @@ let oEleCC = {
 	//--------------------------------------------------------------------------------------------------------------
 	// Test
 	EleCCTest: function() {
-		this.Notify(this.thinking + '<br>' + 
-			this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
-			this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'] + ':' + this.Flags['AutoCastD'],
-			false);
+		let sText = this.thinking + '<br>' + 
+		            this.spellCheckHand(1, this.GrimoireGetChange()) + ':' + this.spellCheckHand(2, this.GrimoireGetChange()) + '<br>' +
+		            JSON.stringify(this.sCastChainName)   + '/' + JSON.stringify(this.nCastChainSeason) + '<br>' +
+		            this.Flags['AutoCast1'] + ':' + this.Flags['AutoCast2'];
+		let nBuy  = 0;
+		let nSell = 0;
+		for (const loop1 of this.aSellGodzamokTarget) {
+			let nAmt  = Game.Objects[loop1].amount;
+			Game.Objects[loop1].amount = 0;
+			sText += '<br>' + Game.Objects[loop1].name + ':' +  Beautify(Game.Objects[loop1].getSumPrice(nAmt));
+			// + ' - ';
+			nBuy  += Game.Objects[loop1].getSumPrice(nAmt);
+			Game.Objects[loop1].amount = nAmt;
+			//sText += Beautify(Game.Objects[loop1].getReverseSumPrice(nAmt));
+			//nSell += Game.Objects[loop1].getReverseSumPrice(nAmt);
+		}
+		sText += '<br>Total:' +  Beautify(nBuy); // + ' - ' +  Beautify(nSell);
+		this.Notify(sText, false);
 	}
 };
 oEleCC.Init();
