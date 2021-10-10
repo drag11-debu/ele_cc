@@ -40,6 +40,9 @@ body {
 #webHeader #webHeaderA {
 	width:            calc(100% - 150px);
 }
+#webHeader #webHeaderA a {
+	color:            white;
+}
 #webHeader #webHeaderB {
 	display:          table;
 	margin-left:      auto;
@@ -89,7 +92,7 @@ button:disabled { opacity: 0.7; }
 #webSide {
 	box-sizing:  border-box;
 	width:       150px;
-	height:      calc(100% - 8px);
+	height:      100%;
 	padding:     2px;
 	font-size:   small;
 	line-height: 1.5em;
@@ -127,17 +130,20 @@ button:disabled { opacity: 0.7; }
 			<div class="nowrapGroup"><input  type="checkbox" id="click_golden"   class="check_box send_onoff" data-event="CLICK_GOLDEN"   /><label class="check_box_label" for="click_golden">GoldenCookie</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="buy_ep"         class="check_box send_onoff" data-event="BUY_EP"         /><label class="check_box_label" for="buy_ep">ElderPledge</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="click_sugar"    class="check_box send_onoff" data-event="CLICK_SUGAR"    /><label class="check_box_label" for="click_sugar">Sugar</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="get_caramel"  class="check_box send_onoff" data-event="GET_CARAMEL"  /><label class="check_box_label" for="get_caramel">Caramel</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="get_golden"   class="check_box send_onoff" data-event="GET_GOLDEN"   /><label class="check_box_label" for="get_golden">Golden</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="click_fortune"  class="check_box send_onoff" data-event="CLICK_FORTUNE"  /><label class="check_box_label" for="click_fortune">Fortune</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="click_dragon"   class="check_box send_onoff" data-event="CLICK_DRAGON"   /><label class="check_box_label" for="click_dragon">Dragon</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="click_wrinkler" class="check_box send_onoff" data-event="CLICK_WRINKLER" /><label class="check_box_label" for="click_wrinkler">Wrinkler</label></div>
 			<hr />
 			GodzamokPlan...
 			<div class="nowrapGroup"><input  type="checkbox" id="click_switch"   class="check_box send_onoff" data-event="CLICK_SWITCH"   /><label class="check_box_label" for="click_switch">GoldenSwitch</label></div>
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="sell_godzamok"  class="check_box send_onoff" data-event="SELL_GODZAMOK"  /><label class="check_box_label" for="sell_godzamok">Godzamok</label></div>
 			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_cast"     class="check_box send_onoff" data-event="CLICK_CAST"     /><label class="check_box_label" for="click_cast">Cast</label></div>
 			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_loan"      class="check_box send_onoff" data-event="AUTO_LOAN"      /><label class="check_box_label" for="auto_loan">Loan2</label></div>
+			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_refill"    class="check_box send_onoff" data-event="AUTO_REFILL"    /><label class="check_box_label" for="auto_refill">SugarRefill</label></div>
 			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_sugar"     class="check_box send_onoff" data-event="AUTO_SUGAR"     /><label class="check_box_label" for="auto_sugar">SugarFrenzy</label></div>
-			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_charge"    class="check_box send_onoff" data-event="AUTO_CHARGE"    /><label class="check_box_label" for="auto_charge">SugarCharge</label></div>
-			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="sell_godzamok"  class="check_box send_onoff" data-event="SELL_GODZAMOK"  /><label class="check_box_label" for="sell_godzamok">Godzamok</label></div>
+			<div class="nowrapGroup"><input  type="checkbox" id="auto_waste"     class="check_box send_onoff" data-event="AUTO_WASTE"     /><label class="check_box_label" for="auto_waste">CastWaste</label></div>
 			<hr />
 			AutoBuy...
 			<div class="nowrapGroup">&emsp;<select id="auto_buy_select" data-event="GARDEN_JUICER_TARGET">
@@ -148,7 +154,8 @@ button:disabled { opacity: 0.7; }
 			<hr />
 			<div class="nowrapGroup"><input  type="checkbox" id="auto_juicer"     class="check_box"            data-event="AUTO_JUICER"    /><label class="check_box_label" for="auto_juicer">AutoJuicer</label></div>
 			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_gardener"  class="check_box send_onoff" data-event="CLICK_GARDENER" /><label class="check_box_label" for="click_gardener">Gardener</label></div>
-			&emsp;<select id="click_juicer_target" data-event="GARDEN_JUICER_TARGET">
+			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_juicer"    class="check_box send_onoff" data-event="GARDEN_JUICER"  /><label class="check_box_label" for="click_juicer">Juicer</label></div>
+			&emsp;&emsp;<select id="click_juicer_target" data-event="GARDEN_JUICER_TARGET">
 				<option value="">----------</option>
 				<option value="queenbeetLump">Juicy</option>
 				<option value="everdaisy">EverDaisy</option>
@@ -159,7 +166,6 @@ button:disabled { opacity: 0.7; }
 				<option value="cronerice">Cronerice</option>
 				<option value="queenbeet">Queenbeet</option>
 			</select>
-			<div class="nowrapGroup">&emsp;<input  type="checkbox" id="click_juicer"    class="check_box send_onoff" data-event="GARDEN_JUICER"  /><label class="check_box_label" for="click_juicer">Juicer</label></div>
 			<div class="nowrapGroup">&emsp;<button type="button"   id="reroll_garden"   class="send_savedata" data-event="REROLL_GARDEN" />ReRoll</button></div>
 			<div class="nowrapGroup">&emsp;<button type="button"   id="reroll_g_once"   class="send_savedata" data-event="REROLL_G_ONCE" />RROnce</button></div>
 			<hr />

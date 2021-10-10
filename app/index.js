@@ -59,7 +59,7 @@ app.on('ready', () => {
 	const lngWidth      = 1000;
 	const lngSideWidth  = 150;
 	const lngHeight     = 600;
-	const lngHeadHeight = 32 + 2;
+	const lngHeadHeight = 32;
 	win = new BrowserWindow({
 		width:	            lngWidth + lngSideWidth,
 		height:	            lngHeight,
@@ -99,6 +99,10 @@ app.on('ready', () => {
 		height: true
 	});
 	view.webContents.loadURL('https://orteil.dashnet.org/cookieclicker/');
+	view.webContents.on('new-window', (ev,url) => {
+		ev.preventDefault();
+		shell.openExternal(url);
+	});
 	view.webContents.on('did-finish-load', () => {
 		view.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname, 'ele_cc.js')).toString());
 		// Change Cookies in bank font size
@@ -106,9 +110,9 @@ app.on('ready', () => {
 		view.webContents.insertCSS('#cookies           { font-size: 12pt !important; } ' + 
 		                           '#commentsText      { font-size:  8pt; } ' + 
 		                           '#commentsTextBelow { font-size:  8pt; } ' + 
-		                           '#bankBalance       { font-size: 10pt; } ' + 
-		                           '#topBar            { display: none; } ' + 
-		                           '#game              { top:     0 !important; } ');
+		                           '#bankBalance       { font-size: 10pt; } ');
+//		                           '#topBar            { display: none; } ' + 
+//		                           '#game              { top:     0 !important; } ');
 		// Block ADs
 		//view.webContents.insertCSS('#aqad              { display: none; }');
 	});
@@ -155,7 +159,8 @@ app.on('ready', () => {
 	});
 	ipcMain.handle('AUTO_LOAN',         (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoLoan']     = " + onoff + ";"); });
 	ipcMain.handle('AUTO_SUGAR',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoSugar']    = " + onoff + ";"); });
-	ipcMain.handle('AUTO_CHARGE',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoCharge']   = " + onoff + ";"); });
+	ipcMain.handle('AUTO_REFILL',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoRefill']   = " + onoff + ";"); });
+	ipcMain.handle('AUTO_WASTE',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoWaste']    = " + onoff + ";"); });
 	ipcMain.handle('BUY_EP',            (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = " + onoff + ";"); });
 	ipcMain.handle('BUY_A',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyA']     = " + onoff + ";"); });
 	ipcMain.handle('BUY_Z',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = " + onoff + ";"); });
@@ -163,6 +168,8 @@ app.on('ready', () => {
 	ipcMain.handle('CLICK_DRAGON',      (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Dragon']       = " + onoff + ";"); });
 	ipcMain.handle('CLICK_WRINKLER',    (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['Wrinkler']     = " + onoff + ";"); });
 	ipcMain.handle('CLICK_SUGAR',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['ReRollSugar']  = " + onoff + ";"); });
+	ipcMain.handle('GET_CARAMEL',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['SugarCaramel'] = " + onoff + ";"); });
+	ipcMain.handle('GET_GOLDEN',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['SugarGolden']  = " + onoff + ";"); });
 	ipcMain.handle('AUTO_JUICER',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoJuicer']   = " + onoff + ";"); });
 	ipcMain.handle('CLICK_GARDENER',    (event, onoff) => {
 		view.webContents.executeJavaScript(onoff ? "oEleCC.Flags['Gardener'] = true;" : "oEleCC.ClickGardenerStop();");
@@ -190,7 +197,7 @@ app.on('ready', () => {
 		if (onoff) {
 			let aSize = win.getSize();
 			nHeightBak = aSize[1];
-			win.setSize(aSize[0], process.platform == 'linux' ? 90 : 130, false);
+			win.setSize(aSize[0], process.platform == 'linux' ? 110 : 150, false);
 		} else if (nHeightBak > 0) {
 			let aSize = win.getSize();
 			win.setSize(aSize[0], nHeightBak, false);
