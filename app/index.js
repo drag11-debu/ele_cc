@@ -161,6 +161,9 @@ app.on('ready', () => {
 	ipcMain.handle('AUTO_SUGAR',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoSugar']    = " + onoff + ";"); });
 	ipcMain.handle('AUTO_REFILL',       (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoRefill']   = " + onoff + ";"); });
 	ipcMain.handle('AUTO_WASTE',        (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoWaste']    = " + onoff + ";"); });
+	ipcMain.handle('GODZAMOK_ONCE', (event, savedata) => {
+		view.webContents.executeJavaScript("oEleCC.SellGodzamokOnce();");
+	});
 	ipcMain.handle('BUY_EP',            (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['BuyEP']        = " + onoff + ";"); });
 	ipcMain.handle('BUY_A',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyA']     = " + onoff + ";"); });
 	ipcMain.handle('BUY_Z',             (event, onoff) => { view.webContents.executeJavaScript("oEleCC.Flags['AutoBuyZ']     = " + onoff + ";"); });
@@ -224,6 +227,9 @@ app.on('ready', () => {
 				view.webContents.executeJavaScript("oEleCC.Notify('Auto-Backup stopped.', false);");
 			}
 		}
+	});
+	ipcMain.handle('TOYS', (_) => {
+		view.webContents.executeJavaScript("Game.TOYS = 0;");
 	});
 	ipcMain.handle('TEST', (_) => {
 		view.webContents.executeJavaScript("oEleCC.EleCCTest();");

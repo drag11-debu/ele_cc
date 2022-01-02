@@ -115,11 +115,12 @@ button:disabled { opacity: 0.7; }
 			<span class="nowrapGroup"><input  type="checkbox" id="auto_backup"    class="check_box send_onoff" data-event="AUTO_BACKUP"    /><label class="check_box_label" for="auto_backup">Backup+Log</label></span>
 			<span class="nowrapGroup">
 				<button type="button"   id="quick_export"    class="send_only"     data-event="QUICK_EXPORT" >QExp</button>
-				<button type="button"   id="quick_import"    class="send_savedata" data-event="QUICK_IMPORT" >QImp</button>
 				<button type="button"   id="quick_clear"     >QClear</button>
 				<input  type="text"     id="quick_data"      style="width: 5em;"></input>
+				<button type="button"   id="quick_import"    class="send_savedata" data-event="QUICK_IMPORT" >QImp</button>
 			</span>
 			<button type="button"   id="win_devtool"   class="send_only"     data-event="WIN_DEVTOOL" >Dev</button>
+			<button type="button"   id="toys"          class="send_only"     data-event="TOYS"        >TOYS</button>
 			<button type="button"   id="test"          class="send_only"     data-event="TEST"        >Test</button>
 			<a href="https://messieurs.github.io/fthofplannerv2/" target="_blank">Planner</a>
 		</div>
@@ -151,6 +152,7 @@ button:disabled { opacity: 0.7; }
 			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_refill"    class="check_box send_onoff" data-event="AUTO_REFILL"    /><label class="check_box_label" for="auto_refill">SugarRefill</label></div>
 			<div class="nowrapGroup">&emsp;&emsp;<input  type="checkbox" id="auto_sugar"     class="check_box send_onoff" data-event="AUTO_SUGAR"     /><label class="check_box_label" for="auto_sugar">SugarFrenzy</label></div>
 			<div class="nowrapGroup"><input  type="checkbox" id="auto_waste"     class="check_box send_onoff" data-event="AUTO_WASTE"     /><label class="check_box_label" for="auto_waste">CastWaste</label></div>
+			<div class="nowrapGroup"><button type="button"   id="godzamok_once"  class="send_only"            data-event="GODZAMOK_ONCE"  />GodzamokOnce</button></div>
 			<hr />
 			AutoBuy...
 			<div class="nowrapGroup">&emsp;<select id="auto_buy_select" data-event="GARDEN_JUICER_TARGET">

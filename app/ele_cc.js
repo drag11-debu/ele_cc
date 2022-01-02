@@ -109,11 +109,11 @@ let oEleCC = {
 	nBuyAUpgradeRate:        1.1,
 	nBuyZWishRate:           1.5,
 	nBuyZUpgradeRate:        1.2,
-	aBuyZTarget1:            ['Fractal engine', 'Idleverse'],
+	aBuyZTarget1:            ['Fractal engine', 'Javascript console', 'Idleverse'],
 	nBuyZTarget1Rate:        1.2,
-	aBuyZTarget2:            ['Cursor', 'Grandma', 'Portal', 'Prism', 'Javascript console'],
+	aBuyZTarget2:            ['Cursor', 'Grandma', 'Portal', 'Prism', 'Chancemaker'],
 	nBuyZTarget2Rate:        1.5,
-	aBuyZTarget3:            ['Farm', 'Bank', 'Temple', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser', 'Chancemaker'],
+	aBuyZTarget3:            ['Farm', 'Bank', 'Temple', 'Shipment', 'Alchemy lab', 'Time machine', 'Antimatter condenser'],
 	nBuyZTarget3Rate:        3,
 	// For Garden Juicer
 	nGardenJuicerFreqMain:   1000 * 5,
@@ -296,7 +296,7 @@ let oEleCC = {
 						setTimeout(this.SellGodzamok.bind(this), 100);
 					}
 					// Auto Cast spell(1)
-					if (this.Flags['AutoCast1'] && (!Game.hasBuff('Clot'))) {
+					if (this.Flags['AutoCast1'] && (!this.AnyHasBuff(['Clot', 'Loan 1 (interest)', 'Loan 2 (interest)']))) {
 						if (this.CastSpell('hand of fate', (this.sCastChainName.length > 1))) {
 							this.Flags['AutoCast1'] = false;
 							this.Notify('Bibbidi-bobbidi...poo...', false);
@@ -472,6 +472,23 @@ let oEleCC = {
 				if (this.oSellGodzamokAmount[loop1] > 0) Game.Objects[loop1].buy(this.oSellGodzamokAmount[loop1]);
 			}
 		}
+	},
+	SellGodzamokOnce: function() {
+		if (!Object.keys(this.oSellGodzamokAmount).length) {
+			for (const loop1 of this.aSellGodzamokTarget) {
+				this.oSellGodzamokAmount[loop1] = Game.Objects[loop1].amount - ((loop1 == 'Farm') || (loop1 == 'Bank') ? 301 : 1);
+			}
+		}
+		for (const loop1 of this.aSellGodzamokTarget) {
+			if ((this.oSellGodzamokAmount[loop1] > 0) && (Game.Objects[loop1].amount >= this.oSellGodzamokAmount[loop1])) Game.Objects[loop1].sell(this.oSellGodzamokAmount[loop1], 1);
+		}
+		setTimeout(this.SellGodzamokOnceBuy.bind(this), 100);
+	},
+	SellGodzamokOnceBuy: function() {
+		for (const loop1 of this.aSellGodzamokTarget) {
+			if (this.oSellGodzamokAmount[loop1] > 0) Game.Objects[loop1].buy(this.oSellGodzamokAmount[loop1]);
+		}
+		this.oSellGodzamokAmount      = {};
 	},
 	//--------------------------------------------------------------------------------------------------------------
 	// Click Dragon
@@ -1228,7 +1245,7 @@ let oEleCC = {
 			// Auto Cast spell(2)
 			if (this.Flags['AutoCast2']) {
 				if (this.AnyHasBuff(this.aAutoCastTarget) && 
-				    (!this.AnyHasBuff(['Clot', 'Dragonflight', 'Click frenzy', 'Elder frenzy'])) &&
+				    (!this.AnyHasBuff(['Clot', 'Dragonflight', 'Click frenzy', 'Elder frenzy', 'Loan 1 (interest)', 'Loan 2 (interest)'])) &&
 				    (this.Timers['ReRollGarden'] == 0) && (this.nGardenJuicerReRollCnt == 0) && (this.Timers['ReRollSugar'] == 0)) {
 					if (this.CastSpell('hand of fate', (this.sCastChainName.length > 1))) {
 						this.Flags['AutoCast2'] = false;
